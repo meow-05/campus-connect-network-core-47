@@ -1,73 +1,72 @@
-# Welcome to your Lovable project
 
-## Project info
+# IntraLink - Campus Networking Platform
 
-**URL**: https://lovable.dev/projects/6fa461e5-5e26-4555-91e7-7e7dcf10d680
+A role-based campus networking platform for students, faculty, and mentors.
 
-## How can I edit this code?
+## Project Structure
 
-There are several ways of editing your application.
+This project follows a feature-based architecture with clear separation between backend and frontend concerns.
 
-**Use Lovable**
+### Backend Structure
+- `backend/features/` - Domain-specific backend logic
+- `backend/utils/` - Shared utilities and helpers
+- `backend/migrations/` - Database migrations
+- `backend/cron/` - Scheduled tasks
 
-Simply visit the [Lovable Project](https://lovable.dev/projects/6fa461e5-5e26-4555-91e7-7e7dcf10d680) and start prompting.
+### Frontend Structure
+- `src/features/` - Feature-specific components and hooks
+- `src/pages/` - Role-based page components
+- `src/components/` - Shared UI components
+- `src/lib/` - API clients and constants
 
-Changes made via Lovable will be committed automatically to this repo.
+## Development Phases
 
-**Use your preferred IDE**
+### Phase 1: Scaffolding + Supabase Integration ✅
+- Project structure setup
+- Supabase types generation
+- Database connection setup
 
-If you want to work locally using your own IDE, you can clone this repo and push changes. Pushed changes will also be reflected in Lovable.
+### Phase 2: Authentication (Upcoming)
+- Authentication system
+- Protected routes
+- Role-based access
 
-The only requirement is having Node.js & npm installed - [install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating)
+### Phase 3: Backend Features (Upcoming)
+- Feature implementation
+- API endpoints
+- Business logic
 
-Follow these steps:
+### Phase 4: Frontend UI (Upcoming)
+- Component implementation
+- User interfaces
+- Feature integration
 
-```sh
-# Step 1: Clone the repository using the project's Git URL.
-git clone <YOUR_GIT_URL>
+### Phase 5: Testing & Launch (Upcoming)
+- Testing suite
+- Access control
+- Production deployment
 
-# Step 2: Navigate to the project directory.
-cd <YOUR_PROJECT_NAME>
+## Getting Started
 
-# Step 3: Install the necessary dependencies.
-npm i
+```bash
+# Install dependencies
+npm install
 
-# Step 4: Start the development server with auto-reloading and an instant preview.
+# Start development server
 npm run dev
 ```
 
-**Edit a file directly in GitHub**
+## Tech Stack
 
-- Navigate to the desired file(s).
-- Click the "Edit" button (pencil icon) at the top right of the file view.
-- Make your changes and commit the changes.
+- **Frontend**: React, TypeScript, Tailwind CSS, shadcn/ui
+- **Backend**: Node.js, TypeScript
+- **Database**: Supabase (PostgreSQL)
+- **Authentication**: Supabase Auth
+- **Testing**: Jest, Playwright
 
-**Use GitHub Codespaces**
+## Environment Variables
 
-- Navigate to the main page of your repository.
-- Click on the "Code" button (green button) near the top right.
-- Select the "Codespaces" tab.
-- Click on "New codespace" to launch a new Codespace environment.
-- Edit files directly within the Codespace and commit and push your changes once you're done.
-
-## What technologies are used for this project?
-
-This project is built with:
-
-- Vite
-- TypeScript
-- React
-- shadcn-ui
-- Tailwind CSS
-
-## How can I deploy this project?
-
-Simply open [Lovable](https://lovable.dev/projects/6fa461e5-5e26-4555-91e7-7e7dcf10d680) and click on Share -> Publish.
-
-## Can I connect a custom domain to my Lovable project?
-
-Yes, you can!
-
-To connect a domain, navigate to Project > Settings > Domains and click Connect Domain.
-
-Read more here: [Setting up a custom domain](https://docs.lovable.dev/tips-tricks/custom-domain#step-by-step-guide)
+```bash
+NEXT_PUBLIC_SUPABASE_URL=your_supabase_url
+NEXT_PUBLIC_SUPABASE_ANON_KEY=your_supabase_anon_key
+```
