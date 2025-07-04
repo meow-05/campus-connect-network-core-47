@@ -1,11 +1,16 @@
 
-// User hook
+import { useAuth } from './useAuth';
+
 export function useUser() {
-  // Implementation pending - will return { id, role, department, collegeId }
+  const { authUser, loading, isAuthenticated } = useAuth();
+
   return {
-    id: null,
-    role: null,
-    department: null,
-    collegeId: null
+    id: authUser?.id || null,
+    role: authUser?.role || null,
+    department: null, // This would need to be fetched separately based on role
+    collegeId: authUser?.college_id || null,
+    user: authUser,
+    loading,
+    isAuthenticated,
   };
 }
