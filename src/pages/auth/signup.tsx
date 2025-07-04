@@ -25,7 +25,7 @@ export default function SignupPage() {
     password: '',
     confirmPassword: '',
     display_name: '',
-    role: '' as 'student' | 'faculty' | 'mentor' | 'platform_admin' | '',
+    role: null as 'student' | 'faculty' | 'mentor' | 'platform_admin' | null,
     college_id: '',
   });
   const [showPassword, setShowPassword] = useState(false);
@@ -66,6 +66,14 @@ export default function SignupPage() {
     setError(''); // Clear error when user starts typing
   };
 
+  const handleRoleChange = (value: string) => {
+    setFormData(prev => ({ 
+      ...prev, 
+      role: value as 'student' | 'faculty' | 'mentor' | 'platform_admin' 
+    }));
+    setError('');
+  };
+
   const validateForm = () => {
     if (!formData.email || !formData.password || !formData.display_name || !formData.role) {
       return 'Please fill in all required fields';
@@ -93,6 +101,12 @@ export default function SignupPage() {
     const validationError = validateForm();
     if (validationError) {
       setError(validationError);
+      return;
+    }
+
+    // Ensure role is not null before creating signupData
+    if (!formData.role) {
+      setError('Please select a role');
       return;
     }
 
@@ -179,7 +193,7 @@ export default function SignupPage() {
 
             <div className="space-y-2">
               <Label htmlFor="role">Role *</Label>
-              <Select value={formData.role} onValueChange={(value) => handleInputChange('role', value)}>
+              <Select value={formData.role || ''} onValueChange={handleRoleChange}>
                 <SelectTrigger>
                   <SelectValue placeholder="Select your role" />
                 </SelectTrigger>
