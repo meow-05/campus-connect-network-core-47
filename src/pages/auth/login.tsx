@@ -42,10 +42,10 @@ export default function LoginPage() {
 
   const handleDemoAccount = async (role: 'student' | 'faculty' | 'mentor' | 'platform_admin') => {
     const demoAccounts = {
-      student: { email: 'student@demo.com', password: 'demo123456' },
-      faculty: { email: 'faculty@demo.com', password: 'demo123456' },
-      mentor: { email: 'mentor@demo.com', password: 'demo123456' },
-      platform_admin: { email: 'admin@demo.com', password: 'demo123456' },
+      student: { email: 'student1@nmiet.edu.in', password: 'password123' },
+      faculty: { email: 'faculty1@nmiet.edu.in', password: 'password123' },
+      mentor: { email: 'mentor1@gmail.com', password: 'password123' },
+      platform_admin: { email: 'admin@gmail.com', password: 'admin123' },
     };
 
     const demo = demoAccounts[role];
