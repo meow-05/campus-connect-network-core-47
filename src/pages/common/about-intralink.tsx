@@ -3,7 +3,7 @@ import React from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
-import { Users, Award, Projects, Events } from 'lucide-react';
+import { Users, Award, FolderGit2, CalendarSearch } from 'lucide-react';
 
 export default function AboutIntraLink() {
   const features = [
@@ -13,7 +13,7 @@ export default function AboutIntraLink() {
       description: 'Build meaningful connections with peers, faculty, and industry mentors.',
     },
     {
-      icon: Projects,
+      icon: FolderGit2,
       title: 'Project Collaboration',
       description: 'Find team members, share projects, and showcase your work to the community.',
     },
@@ -23,7 +23,7 @@ export default function AboutIntraLink() {
       description: 'Get your skills verified by experienced mentors and build credibility.',
     },
     {
-      icon: Events,
+      icon: CalendarSearch,
       title: 'Events & Workshops',
       description: 'Discover and participate in college events, workshops, and seminars.',
     },
