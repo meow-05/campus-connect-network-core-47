@@ -34,7 +34,7 @@ import { useTheme } from '@/hooks/useTheme';
 import { cn } from '@/lib/utils';
 
 export default function Sidebar() {
-  const { role, authUser } = useUser();
+  const { role, user } = useUser();
   const { signOut } = useAuth();
   const { theme, toggleTheme } = useTheme();
   const location = useLocation();
@@ -173,14 +173,14 @@ export default function Sidebar() {
       </div>
 
       {/* User Info (when expanded) */}
-      {!collapsed && authUser && (
+      {!collapsed && user && (
         <div className="p-3 border-b">
           <div className="flex items-center space-x-3">
             <div className="w-8 h-8 bg-primary/10 rounded-full flex items-center justify-center">
               <User className="w-4 h-4 text-primary" />
             </div>
             <div className="flex-1 min-w-0">
-              <p className="text-sm font-medium truncate">{authUser.display_name || 'User'}</p>
+              <p className="text-sm font-medium truncate">{user.display_name || 'User'}</p>
               <Badge variant="secondary" className="text-xs capitalize">
                 {role}
               </Badge>
