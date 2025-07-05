@@ -19,8 +19,6 @@ export default function LoginPage() {
   const { signIn, isLoading } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
-  
-  const from = location.state?.from?.pathname || '/';
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -34,8 +32,8 @@ export default function LoginPage() {
     const result = await signIn({ email, password });
     
     if (result.success) {
-      // Let the auth state change handle the redirection
-      navigate(from, { replace: true });
+      // The redirection will be handled by the ProtectedRoute and Index components
+      navigate('/', { replace: true });
     } else {
       setError(result.error || 'Failed to sign in');
     }
@@ -53,8 +51,8 @@ export default function LoginPage() {
     const result = await signIn(demo);
     
     if (result.success) {
-      // Let the auth state change handle the redirection
-      navigate(from, { replace: true });
+      // The redirection will be handled by the ProtectedRoute and Index components
+      navigate('/', { replace: true });
     } else {
       setError(result.error || 'Failed to sign in with demo account');
     }

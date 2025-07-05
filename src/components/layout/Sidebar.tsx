@@ -16,7 +16,9 @@ import {
   Moon,
   Sun,
   Menu,
-  X
+  X,
+  ChevronLeft,
+  ChevronRight
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -43,11 +45,13 @@ export default function Sidebar() {
   const isActive = (path: string) => location.pathname === path;
 
   const getNavLinks = () => {
+    if (!role) return [];
+
     const baseLinks = [
       {
         label: 'Home',
         icon: Home,
-        path: role ? `/pages/${role}/dashboard` : '/dashboard',
+        path: `/pages/${role}/dashboard`,
         show: true,
       },
       {
@@ -77,7 +81,7 @@ export default function Sidebar() {
       {
         label: 'Skill Verification',
         icon: Award,
-        path: role ? `/pages/${role}/skill-verification` : '/skill-verification',
+        path: `/pages/${role}/skill-verification`,
         show: true,
       },
       {
@@ -89,7 +93,7 @@ export default function Sidebar() {
       {
         label: 'Mentorship Sessions',
         icon: User,
-        path: role ? `/pages/${role}/mentorship-sessions` : '/mentorship-sessions',
+        path: `/pages/${role}/mentorship-sessions`,
         show: true,
       },
     ];
@@ -98,11 +102,11 @@ export default function Sidebar() {
     const roleSpecificLinks = [];
 
     // Students link - visible to faculty, mentors, and platform admins
-    if (['faculty', 'mentor', 'platform_admin'].includes(role || '')) {
+    if (['faculty', 'mentor', 'platform_admin'].includes(role)) {
       roleSpecificLinks.push({
         label: 'Students',
         icon: Users,
-        path: role ? `/pages/${role}/students` : '/students',
+        path: `/pages/${role}/students`,
         show: true,
       });
     }
@@ -113,34 +117,34 @@ export default function Sidebar() {
         {
           label: 'Faculty',
           icon: Users,
-          path: '/pages/platform-admin/faculty',
+          path: '/pages/platform_admin/faculty',
           show: true,
         },
         {
           label: 'Colleges',
           icon: Home,
-          path: '/pages/platform-admin/colleges',
+          path: '/pages/platform_admin/colleges',
           show: true,
         }
       );
     }
 
     // Statistics - visible to platform admin and faculty
-    if (['platform_admin', 'faculty'].includes(role || '')) {
+    if (['platform_admin', 'faculty'].includes(role)) {
       roleSpecificLinks.push({
         label: 'Statistics',
         icon: Award,
-        path: role ? `/pages/${role}/stats` : '/stats',
+        path: `/pages/${role}/stats`,
         show: true,
       });
     }
 
     // Profile - visible to students, faculty, and mentors
-    if (['student', 'faculty', 'mentor'].includes(role || '')) {
+    if (['student', 'faculty', 'mentor'].includes(role)) {
       roleSpecificLinks.push({
         label: 'Profile',
         icon: User,
-        path: role ? `/pages/${role}/profile` : '/profile',
+        path: `/pages/${role}/profile`,
         show: true,
       });
     }
@@ -157,7 +161,7 @@ export default function Sidebar() {
   return (
     <div className={cn(
       "flex flex-col h-full bg-card border-r transition-all duration-300",
-      collapsed ? "w-16" : "w-56"
+      collapsed ? "w-14" : "w-48"
     )}>
       {/* Toggle Button */}
       <div className="p-3 border-b">
@@ -165,10 +169,13 @@ export default function Sidebar() {
           variant="ghost"
           size="sm"
           onClick={() => setCollapsed(!collapsed)}
-          className="w-full justify-start p-2"
+          className="w-full justify-center p-2"
         >
-          {collapsed ? <Menu className="h-4 w-4" /> : <X className="h-4 w-4" />}
-          {!collapsed && <span className="ml-2 sr-only">Toggle</span>}
+          {collapsed ? (
+            <ChevronRight className="h-4 w-4" />
+          ) : (
+            <ChevronLeft className="h-4 w-4" />
+          )}
         </Button>
       </div>
 
@@ -182,7 +189,7 @@ export default function Sidebar() {
             <div className="flex-1 min-w-0">
               <p className="text-sm font-medium truncate">{user.display_name || 'User'}</p>
               <Badge variant="secondary" className="text-xs capitalize">
-                {role}
+                {role?.replace('_', ' ')}
               </Badge>
             </div>
           </div>

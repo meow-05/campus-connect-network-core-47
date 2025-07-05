@@ -16,7 +16,7 @@ const Index = () => {
     );
   }
 
-  // Redirect to role-specific dashboard
+  // Redirect to role-specific dashboard immediately
   if (role && user) {
     switch (role) {
       case 'student':
@@ -26,22 +26,23 @@ const Index = () => {
       case 'mentor':
         return <Navigate to="/pages/mentor/dashboard" replace />;
       case 'platform_admin':
-        return <Navigate to="/pages/platform-admin/dashboard" replace />;
+        return <Navigate to="/pages/platform_admin/dashboard" replace />;
       default:
         break;
     }
   }
 
-  return (
-    <div className="space-y-6">
-      <div>
-        <h1 className="text-3xl font-bold tracking-tight">Welcome to IntraLink</h1>
-        <p className="text-muted-foreground">
-          Your college management platform
-        </p>
-      </div>
+  // If no role is found but user exists, show fallback
+  if (user && !role) {
+    return (
+      <div className="space-y-6">
+        <div>
+          <h1 className="text-3xl font-bold tracking-tight">Welcome to IntraLink</h1>
+          <p className="text-muted-foreground">
+            Setting up your account...
+          </p>
+        </div>
 
-      {user && (
         <Card>
           <CardHeader>
             <div className="flex items-center space-x-4">
@@ -56,20 +57,18 @@ const Index = () => {
           </CardHeader>
           <CardContent>
             <div className="flex items-center space-x-4">
-              <Badge variant="secondary" className="capitalize">
-                {role}
+              <Badge variant="secondary">
+                Role being configured...
               </Badge>
-              {user.is_verified ? (
-                <Badge variant="default">Verified</Badge>
-              ) : (
-                <Badge variant="destructive">Unverified</Badge>
-              )}
             </div>
           </CardContent>
         </Card>
-      )}
-    </div>
-  );
+      </div>
+    );
+  }
+
+  // If no user, redirect to login
+  return <Navigate to="/auth/login" replace />;
 };
 
 export default Index;

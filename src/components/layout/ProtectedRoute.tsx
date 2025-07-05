@@ -37,6 +37,14 @@ export default function ProtectedRoute({
     return <Navigate to="/auth/login" state={{ from: location }} replace />;
   }
 
+  // If user is authenticated and tries to access auth pages, redirect to role-based dashboard
+  if (isAuthenticated && location.pathname.startsWith('/auth/')) {
+    if (authUser?.role) {
+      return <Navigate to={`/pages/${authUser.role}/dashboard`} replace />;
+    }
+    return <Navigate to="/" replace />;
+  }
+
   // If user is authenticated but we have specific role requirements
   if (isAuthenticated && allowedRoles && authUser) {
     const hasPermission = allowedRoles.includes(authUser.role);
@@ -44,14 +52,6 @@ export default function ProtectedRoute({
     if (!hasPermission) {
       return <Navigate to="/unauthorized" replace />;
     }
-  }
-
-  // If user is authenticated and tries to access auth pages, redirect to dashboard
-  if (isAuthenticated && location.pathname.startsWith('/auth/')) {
-    if (authUser?.role) {
-      return <Navigate to={`/pages/${authUser.role}/dashboard`} replace />;
-    }
-    return <Navigate to="/" replace />;
   }
 
   return <>{children}</>;

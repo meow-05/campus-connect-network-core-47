@@ -1,4 +1,3 @@
-
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -98,7 +97,8 @@ const App = () => (
               </ProtectedRoute>
             }>
               {/* Default route */}
-              <Route index element={<Navigate to="/dashboard" replace />} />
+              <Route index element={<Index />} />
+              <Route path="dashboard" element={<Index />} />
 
               {/* Common pages */}
               <Route path="pages/common/projects" element={<ProjectsPage />} />
@@ -197,44 +197,42 @@ const App = () => (
               } />
 
               {/* Platform Admin routes */}
-              <Route path="pages/platform-admin/dashboard" element={
+              <Route path="pages/platform_admin/dashboard" element={
                 <ProtectedRoute allowedRoles={['platform_admin']}>
                   <PlatformAdminDashboard />
                 </ProtectedRoute>
               } />
-              <Route path="pages/platform-admin/students" element={
+              <Route path="pages/platform_admin/students" element={
                 <ProtectedRoute allowedRoles={['platform_admin']}>
                   <PlatformAdminStudents />
                 </ProtectedRoute>
               } />
-              <Route path="pages/platform-admin/faculty" element={
+              <Route path="pages/platform_admin/faculty" element={
                 <ProtectedRoute allowedRoles={['platform_admin']}>
                   <PlatformAdminFaculty />
                 </ProtectedRoute>
               } />
-              <Route path="pages/platform-admin/colleges" element={
+              <Route path="pages/platform_admin/colleges" element={
                 <ProtectedRoute allowedRoles={['platform_admin']}>
                   <PlatformAdminColleges />
                 </ProtectedRoute>
               } />
-              <Route path="pages/platform-admin/stats" element={
+              <Route path="pages/platform_admin/stats" element={
                 <ProtectedRoute allowedRoles={['platform_admin']}>
                   <PlatformAdminStats />
                 </ProtectedRoute>
               } />
-              <Route path="pages/platform-admin/skill-verification" element={
+              <Route path="pages/platform_admin/skill-verification" element={
                 <ProtectedRoute allowedRoles={['platform_admin']}>
                   <PlatformAdminSkillVerification />
                 </ProtectedRoute>
               } />
-              <Route path="pages/platform-admin/mentorship-sessions" element={
+              <Route path="pages/platform_admin/mentorship-sessions" element={
                 <ProtectedRoute allowedRoles={['platform_admin']}>
                   <PlatformAdminMentorshipSessions />
                 </ProtectedRoute>
               } />
 
-              {/* Dashboard redirect based on role */}
-              <Route path="dashboard" element={<Index />} />
             </Route>
 
             {/* Catch-all route */}
