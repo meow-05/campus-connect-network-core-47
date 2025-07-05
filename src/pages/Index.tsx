@@ -18,7 +18,18 @@ const Index = () => {
 
   // Redirect to role-specific dashboard
   if (role && user) {
-    return <Navigate to={`/pages/${role}/dashboard`} replace />;
+    switch (role) {
+      case 'student':
+        return <Navigate to="/pages/student/dashboard" replace />;
+      case 'faculty':
+        return <Navigate to="/pages/faculty/dashboard" replace />;
+      case 'mentor':
+        return <Navigate to="/pages/mentor/dashboard" replace />;
+      case 'platform_admin':
+        return <Navigate to="/pages/platform-admin/dashboard" replace />;
+      default:
+        break;
+    }
   }
 
   return (

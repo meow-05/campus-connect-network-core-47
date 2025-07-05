@@ -33,8 +33,8 @@ export function useAuth() {
   const [loading, setLoading] = useState(true);
   const [isLoading, setIsLoading] = useState(false);
 
-  // Fetch user profile data
-  const fetchUserProfile = useCallback(async (userId: string) => {
+  // Fetch user profile data with retry logic for new users
+  const fetchUserProfile = useCallback(async (userId: string, retryCount = 0): Promise<AuthUser | null> => {
     try {
       const { data, error } = await supabase
         .from('users')
@@ -44,6 +44,13 @@ export function useAuth() {
 
       if (error) {
         console.error('Error fetching user profile:', error);
+        
+        // If user not found and we haven't retried much, wait a bit and retry
+        if (error.code === 'PGRST116' && retryCount < 3) {
+          console.log(`User not found, retrying in ${(retryCount + 1) * 1000}ms...`);
+          await new Promise(resolve => setTimeout(resolve, (retryCount + 1) * 1000));
+          return fetchUserProfile(userId, retryCount + 1);
+        }
         return null;
       }
 
@@ -63,19 +70,27 @@ export function useAuth() {
 
   // Initialize auth state
   useEffect(() => {
+    let mounted = true;
+    
     // Set up auth state listener first
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, session) => {
         console.log('Auth state change:', event, session?.user?.id);
+        
+        if (!mounted) return;
+        
         setSession(session);
         setUser(session?.user ?? null);
 
         if (session?.user) {
           // Defer the profile fetch to avoid blocking the auth state change
           setTimeout(async () => {
+            if (!mounted) return;
             const profile = await fetchUserProfile(session.user.id);
-            setAuthUser(profile);
-          }, 0);
+            if (mounted) {
+              setAuthUser(profile);
+            }
+          }, 100);
         } else {
           setAuthUser(null);
         }
@@ -86,18 +101,27 @@ export function useAuth() {
 
     // Then check for existing session
     supabase.auth.getSession().then(({ data: { session } }) => {
+      if (!mounted) return;
+      
       console.log('Initial session:', session?.user?.id);
       setSession(session);
       setUser(session?.user ?? null);
 
       if (session?.user) {
-        fetchUserProfile(session.user.id).then(setAuthUser);
+        fetchUserProfile(session.user.id).then(profile => {
+          if (mounted) {
+            setAuthUser(profile);
+          }
+        });
       }
 
       setLoading(false);
     });
 
-    return () => subscription.unsubscribe();
+    return () => {
+      mounted = false;
+      subscription.unsubscribe();
+    };
   }, [fetchUserProfile]);
 
   const signUp = async (data: SignUpData) => {

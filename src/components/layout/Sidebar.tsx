@@ -12,10 +12,11 @@ import {
   User,
   Settings,
   LogOut,
-  MoreHorizontal,
   Bell,
   Moon,
-  Sun
+  Sun,
+  Menu,
+  X
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -33,7 +34,7 @@ import { useTheme } from '@/hooks/useTheme';
 import { cn } from '@/lib/utils';
 
 export default function Sidebar() {
-  const { role } = useUser();
+  const { role, authUser } = useUser();
   const { signOut } = useAuth();
   const { theme, toggleTheme } = useTheme();
   const location = useLocation();
@@ -96,6 +97,7 @@ export default function Sidebar() {
     // Role-specific links
     const roleSpecificLinks = [];
 
+    // Students link - visible to faculty, mentors, and platform admins
     if (['faculty', 'mentor', 'platform_admin'].includes(role || '')) {
       roleSpecificLinks.push({
         label: 'Students',
@@ -105,6 +107,7 @@ export default function Sidebar() {
       });
     }
 
+    // Platform admin specific links
     if (role === 'platform_admin') {
       roleSpecificLinks.push(
         {
@@ -122,6 +125,7 @@ export default function Sidebar() {
       );
     }
 
+    // Statistics - visible to platform admin and faculty
     if (['platform_admin', 'faculty'].includes(role || '')) {
       roleSpecificLinks.push({
         label: 'Statistics',
@@ -131,6 +135,7 @@ export default function Sidebar() {
       });
     }
 
+    // Profile - visible to students, faculty, and mentors
     if (['student', 'faculty', 'mentor'].includes(role || '')) {
       roleSpecificLinks.push({
         label: 'Profile',
@@ -152,23 +157,40 @@ export default function Sidebar() {
   return (
     <div className={cn(
       "flex flex-col h-full bg-card border-r transition-all duration-300",
-      collapsed ? "w-16" : "w-64"
+      collapsed ? "w-16" : "w-56"
     )}>
       {/* Toggle Button */}
-      <div className="p-4 border-b">
+      <div className="p-3 border-b">
         <Button
           variant="ghost"
           size="sm"
           onClick={() => setCollapsed(!collapsed)}
-          className="w-full justify-start"
+          className="w-full justify-start p-2"
         >
-          <MoreHorizontal className="h-4 w-4" />
-          {!collapsed && <span className="ml-2">Collapse</span>}
+          {collapsed ? <Menu className="h-4 w-4" /> : <X className="h-4 w-4" />}
+          {!collapsed && <span className="ml-2 sr-only">Toggle</span>}
         </Button>
       </div>
 
+      {/* User Info (when expanded) */}
+      {!collapsed && authUser && (
+        <div className="p-3 border-b">
+          <div className="flex items-center space-x-3">
+            <div className="w-8 h-8 bg-primary/10 rounded-full flex items-center justify-center">
+              <User className="w-4 h-4 text-primary" />
+            </div>
+            <div className="flex-1 min-w-0">
+              <p className="text-sm font-medium truncate">{authUser.display_name || 'User'}</p>
+              <Badge variant="secondary" className="text-xs capitalize">
+                {role}
+              </Badge>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Navigation Links */}
-      <nav className="flex-1 p-2 space-y-1">
+      <nav className="flex-1 p-2 space-y-1 overflow-y-auto">
         {navLinks.map((link) => {
           const Icon = link.icon;
           return (
@@ -178,13 +200,14 @@ export default function Sidebar() {
               size="sm"
               className={cn(
                 "w-full justify-start",
+                collapsed ? "px-2" : "px-3",
                 isActive(link.path) && "bg-secondary text-secondary-foreground"
               )}
               asChild
             >
               <Link to={link.path}>
-                <Icon className="h-4 w-4" />
-                {!collapsed && <span className="ml-2">{link.label}</span>}
+                <Icon className="h-4 w-4 flex-shrink-0" />
+                {!collapsed && <span className="ml-3 truncate">{link.label}</span>}
               </Link>
             </Button>
           );
@@ -196,8 +219,8 @@ export default function Sidebar() {
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <Button variant="ghost" size="sm" className="w-full justify-start">
-              <MoreHorizontal className="h-4 w-4" />
-              {!collapsed && <span className="ml-2">More</span>}
+              <Settings className="h-4 w-4" />
+              {!collapsed && <span className="ml-3">More</span>}
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent side="right" align="end" className="w-56">

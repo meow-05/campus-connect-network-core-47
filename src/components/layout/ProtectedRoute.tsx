@@ -46,8 +46,11 @@ export default function ProtectedRoute({
     }
   }
 
-  // If user is authenticated and tries to access auth pages, redirect to home
+  // If user is authenticated and tries to access auth pages, redirect to dashboard
   if (isAuthenticated && location.pathname.startsWith('/auth/')) {
+    if (authUser?.role) {
+      return <Navigate to={`/pages/${authUser.role}/dashboard`} replace />;
+    }
     return <Navigate to="/" replace />;
   }
 

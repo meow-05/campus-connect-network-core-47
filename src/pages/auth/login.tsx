@@ -34,6 +34,7 @@ export default function LoginPage() {
     const result = await signIn({ email, password });
     
     if (result.success) {
+      // Let the auth state change handle the redirection
       navigate(from, { replace: true });
     } else {
       setError(result.error || 'Failed to sign in');
@@ -52,6 +53,7 @@ export default function LoginPage() {
     const result = await signIn(demo);
     
     if (result.success) {
+      // Let the auth state change handle the redirection
       navigate(from, { replace: true });
     } else {
       setError(result.error || 'Failed to sign in with demo account');
