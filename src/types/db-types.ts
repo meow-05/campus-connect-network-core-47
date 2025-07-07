@@ -25,9 +25,12 @@ export type Notice = Tables<'notices'>;
 export type Project = Tables<'projects'>;
 export type MentorshipSession = Tables<'mentorship_sessions'>;
 export type SkillVerification = Tables<'skill_verifications'>;
+export type EventRegistration = Tables<'event_registrations'>;
+export type EventFeedback = Tables<'event_feedback'>;
 
 // Enum types
 export type UserRole = Enums<'user_role'>;
 export type EventStatus = Enums<'event_status'>;
 export type ProjectStatus = Enums<'project_status'>;
 export type SessionStatus = Enums<'session_status'>;
+export type DepartmentEnum = Enums<'department_enum'>;

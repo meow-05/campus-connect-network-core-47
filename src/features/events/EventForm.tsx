@@ -14,7 +14,7 @@ import { useAuth } from '@/hooks/useAuth';
 import { useSupabase } from '@/hooks/useSupabase';
 import { toast } from 'sonner';
 import { format } from 'date-fns';
-import { Event } from '@/types/db-types';
+import { Event, DepartmentEnum } from '@/types/db-types';
 
 const eventSchema = z.object({
   title: z.string().min(1, 'Title is required'),
@@ -76,7 +76,7 @@ export default function EventForm({ event, onSuccess, onCancel }: EventFormProps
       registration_opens_at: event?.registration_opens_at ? format(new Date(event.registration_opens_at), "yyyy-MM-dd'T'HH:mm") : '',
       registration_closes_at: event?.registration_closes_at ? format(new Date(event.registration_closes_at), "yyyy-MM-dd'T'HH:mm") : '',
       preparation_docs: event?.preparation_docs || [],
-      target_departments: event?.target_departments || [],
+      target_departments: event?.target_departments?.map(dept => dept.toString()) || [],
     }
   });
 
@@ -121,12 +121,23 @@ export default function EventForm({ event, onSuccess, onCancel }: EventFormProps
         .filter(doc => doc.trim())
         .map(doc => doc.trim());
 
+      // Convert target_departments to the proper enum type
+      const targetDepartments = data.target_departments?.length 
+        ? data.target_departments as DepartmentEnum[]
+        : null;
+
       const eventData = {
-        ...data,
-        college_id: authUser.college_id,
+        title: data.title,
+        description: data.description,
+        event_type: data.event_type,
+        start_time: data.start_time,
+        end_time: data.end_time,
+        is_online: data.is_online,
+        is_public: data.is_public,
+        college_id: authUser.college_id!,
         organizer_id: authUser.id,
         preparation_docs: prepDocs.length > 0 ? prepDocs : null,
-        target_departments: data.target_departments?.length ? data.target_departments : null,
+        target_departments: targetDepartments,
         max_participants: data.max_participants || null,
         registration_opens_at: data.registration_opens_at || null,
         registration_closes_at: data.registration_closes_at || null,
