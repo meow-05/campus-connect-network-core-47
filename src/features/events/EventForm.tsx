@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -110,7 +109,10 @@ export default function EventForm({ event, onSuccess, onCancel }: EventFormProps
   };
 
   const onSubmit = async (data: EventFormData) => {
-    if (!authUser) return;
+    if (!authUser?.college_id) {
+      toast.error('College information missing');
+      return;
+    }
 
     try {
       setLoading(true);
@@ -134,7 +136,7 @@ export default function EventForm({ event, onSuccess, onCancel }: EventFormProps
         end_time: data.end_time,
         is_online: data.is_online,
         is_public: data.is_public,
-        college_id: authUser.college_id!,
+        college_id: authUser.college_id,
         organizer_id: authUser.id,
         preparation_docs: prepDocs.length > 0 ? prepDocs : null,
         target_departments: targetDepartments,
@@ -191,7 +193,6 @@ export default function EventForm({ event, onSuccess, onCancel }: EventFormProps
   return (
     <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        {/* Title */}
         <div className="md:col-span-2">
           <Label htmlFor="title">Event Title *</Label>
           <Input

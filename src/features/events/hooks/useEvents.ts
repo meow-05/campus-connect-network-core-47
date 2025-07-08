@@ -26,47 +26,18 @@ export function useEvents() {
       setLoading(true);
       setError(null);
       
-      let query = supabase
+      // Simplified query that works with the new RLS policies
+      const { data: eventsData, error } = await supabase
         .from('events')
-        .select('*');
-
-      // Apply role-based filtering
-      if (authUser.role === 'student' || authUser.role === 'mentor') {
-        // Get user's department for filtering
-        const { data: userData } = await supabase
-          .from('students') 
-          .select('department_id')
-          .eq('user_id', authUser.id)
-          .single();
-
-        if (userData?.department_id) {
-          const { data: deptData } = await supabase
-            .from('college_departments')
-            .select('name')
-            .eq('id', userData.department_id)
-            .single();
-
-          if (deptData?.name) {
-            query = query.or(`is_public.eq.true,target_departments.cs.{${deptData.name}}`);
-          }
-        } else {
-          query = query.eq('is_public', true);
-        }
-      }
-
-      // Faculty and platform admins see all events in their college
-      if (authUser.role === 'faculty' || authUser.role === 'platform_admin') {
-        query = query.eq('college_id', authUser.college_id);
-      }
-
-      const { data: eventsData, error } = await query.order('start_time', { ascending: true });
+        .select('*')
+        .order('start_time', { ascending: true });
 
       if (error) {
         throw error;
       }
 
       // Enhance events with registration data
-      const processedEvents = await Promise.all(eventsData.map(async (event) => {
+      const processedEvents = await Promise.all((eventsData || []).map(async (event) => {
         // Get registration count
         const { count: registrationCount } = await supabase
           .from('event_registrations')
@@ -79,7 +50,7 @@ export function useEvents() {
           .select('id')
           .eq('event_id', event.id)
           .eq('user_id', authUser.id)
-          .single();
+          .maybeSingle();
 
         // Get user's feedback if exists
         const { data: userFeedback } = await supabase
@@ -87,7 +58,7 @@ export function useEvents() {
           .select('*')
           .eq('event_id', event.id)
           .eq('user_id', authUser.id)
-          .single();
+          .maybeSingle();
 
         return {
           ...event,
@@ -127,7 +98,7 @@ export function useEvents() {
         return { success: false, error: 'Registration has closed' };
       }
 
-      if (event.max_participants && event.registration_count >= event.max_participants) {
+      if (event.max_participants && event.registration_count! >= event.max_participants) {
         return { success: false, error: 'Event is full' };
       }
 
@@ -158,7 +129,7 @@ export function useEvents() {
     if (!authUser) return { success: false, error: 'Not authenticated' };
 
     try {
-      const feedbackData = {
+      const feedbackData: any = {
         event_id: eventId,
         user_id: authUser.id,
         rating: rating || null,
@@ -171,7 +142,7 @@ export function useEvents() {
         .select('id')
         .eq('event_id', eventId)
         .eq('user_id', authUser.id)
-        .single();
+        .maybeSingle();
 
       if (existingFeedback) {
         // Update existing feedback
