@@ -1,6 +1,7 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useAuth } from '@/hooks/useAuth';
+import { useSupabase } from '@/hooks/useSupabase';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -23,15 +24,40 @@ interface EventWithDetails extends Event {
 
 export default function EventsPage() {
   const { authUser } = useAuth();
-  const { events, loading, registerForEvent, refetch } = useEvents();
+  const supabase = useSupabase();
+  const { events, loading, registerForEvent, filterEvents, deleteEvent, refetch } = useEvents();
   
   const [selectedEvent, setSelectedEvent] = useState<EventWithDetails | null>(null);
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [editingEvent, setEditingEvent] = useState<EventWithDetails | null>(null);
-  const [filter, setFilter] = useState<string>('all');
+  const [filter, setFilter] = useState<string>('events-for-me');
   const [searchTerm, setSearchTerm] = useState('');
+  const [userDepartmentId, setUserDepartmentId] = useState<string>('');
 
   const canCreateEvents = authUser?.role === 'platform_admin' || authUser?.role === 'faculty';
+
+  // Fetch user's department for filtering
+  useEffect(() => {
+    const fetchUserDepartment = async () => {
+      if (authUser?.role === 'student') {
+        try {
+          const { data } = await supabase
+            .from('students')
+            .select('department_id')
+            .eq('user_id', authUser.id)
+            .single();
+          
+          if (data) {
+            setUserDepartmentId(data.department_id);
+          }
+        } catch (error) {
+          console.error('Error fetching user department:', error);
+        }
+      }
+    };
+
+    fetchUserDepartment();
+  }, [authUser, supabase]);
 
   const handleRegisterForEvent = async (eventId: string) => {
     const result = await registerForEvent(eventId);
@@ -42,33 +68,21 @@ export default function EventsPage() {
 
   const handleDeleteEvent = async (eventId: string) => {
     if (!canCreateEvents) return;
-    // Delete functionality would be implemented here
-    toast.success('Event deleted successfully');
-    refetch();
+    const result = await deleteEvent(eventId);
+    if (!result.success && result.error) {
+      toast.error(result.error);
+    }
   };
 
-  const filteredEvents = events.filter(event => {
+  // Apply search and filter
+  const searchFilteredEvents = events.filter(event => {
     if (searchTerm && !event.title.toLowerCase().includes(searchTerm.toLowerCase())) {
       return false;
     }
-
-    const now = new Date();
-    const eventStart = new Date(event.start_time);
-    const eventEnd = new Date(event.end_time);
-
-    switch (filter) {
-      case 'upcoming':
-        return eventStart > now;
-      case 'past':
-        return eventEnd < now;
-      case 'registered':
-        return event.user_registered;
-      case 'public':
-        return event.is_public;
-      default:
-        return true;
-    }
+    return true;
   });
+
+  const filteredEvents = filterEvents(searchFilteredEvents, filter, authUser?.role, userDepartmentId);
 
   if (loading) {
     return (
@@ -110,13 +124,15 @@ export default function EventsPage() {
             <SelectValue placeholder="Filter events" />
           </SelectTrigger>
           <SelectContent>
+            {(authUser?.role === 'student' || authUser?.role === 'faculty') && (
+              <SelectItem value="events-for-me">Events for Me</SelectItem>
+            )}
             <SelectItem value="all">All Events</SelectItem>
             <SelectItem value="upcoming">Upcoming</SelectItem>
             <SelectItem value="past">Past Events</SelectItem>
             {(authUser?.role === 'student' || authUser?.role === 'mentor') && (
               <SelectItem value="registered">My Registrations</SelectItem>
             )}
-            <SelectItem value="public">Public Events</SelectItem>
           </SelectContent>
         </Select>
       </div>

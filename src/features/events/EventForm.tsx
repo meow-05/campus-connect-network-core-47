@@ -13,7 +13,7 @@ import { useAuth } from '@/hooks/useAuth';
 import { useSupabase } from '@/hooks/useSupabase';
 import { toast } from 'sonner';
 import { format } from 'date-fns';
-import { Event, DepartmentEnum } from '@/types/db-types';
+import { Event } from '@/types/db-types';
 
 const eventSchema = z.object({
   title: z.string().min(1, 'Title is required'),
@@ -24,18 +24,18 @@ const eventSchema = z.object({
   is_online: z.boolean(),
   virtual_link: z.string().optional(),
   physical_location: z.string().optional(),
-  location: z.string().optional(),
-  is_public: z.boolean(),
-  max_participants: z.number().optional(),
+  college_id: z.string().optional(),
+  max_participants: z.number().optional().nullable(),
   registration_opens_at: z.string().optional(),
   registration_closes_at: z.string().optional(),
   preparation_docs: z.array(z.string()).optional(),
   target_departments: z.array(z.string()).optional(),
+  target_years: z.array(z.number()).optional(),
 }).refine((data) => {
   if (data.is_online && !data.virtual_link) {
     return false;
   }
-  if (!data.is_online && !data.physical_location && !data.location) {
+  if (!data.is_online && !data.physical_location) {
     return false;
   }
   return true;
@@ -55,8 +55,11 @@ export default function EventForm({ event, onSuccess, onCancel }: EventFormProps
   const { authUser } = useAuth();
   const supabase = useSupabase();
   const [departments, setDepartments] = useState<any[]>([]);
+  const [colleges, setColleges] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
   const [prepDocsInput, setPrepDocsInput] = useState('');
+
+  const isPlatformAdmin = authUser?.role === 'platform_admin';
 
   const form = useForm<EventFormData>({
     resolver: zodResolver(eventSchema),
@@ -69,33 +72,62 @@ export default function EventForm({ event, onSuccess, onCancel }: EventFormProps
       is_online: event?.is_online || false,
       virtual_link: event?.virtual_link || '',
       physical_location: event?.physical_location || '',
-      location: event?.location || '',
-      is_public: event?.is_public ?? true,
-      max_participants: event?.max_participants || undefined,
+      college_id: event?.college_id || (isPlatformAdmin ? '' : authUser?.college_id || ''),
+      max_participants: event?.max_participants,
       registration_opens_at: event?.registration_opens_at ? format(new Date(event.registration_opens_at), "yyyy-MM-dd'T'HH:mm") : '',
       registration_closes_at: event?.registration_closes_at ? format(new Date(event.registration_closes_at), "yyyy-MM-dd'T'HH:mm") : '',
       preparation_docs: event?.preparation_docs || [],
       target_departments: event?.target_departments?.map(dept => dept.toString()) || [],
+      target_years: event?.target_years || [],
     }
   });
 
   const watchIsOnline = form.watch('is_online');
+  const watchCollegeId = form.watch('college_id');
 
   useEffect(() => {
+    if (isPlatformAdmin) {
+      fetchColleges();
+    }
     fetchDepartments();
     if (event?.preparation_docs) {
       setPrepDocsInput(event.preparation_docs.join('\n'));
     }
-  }, [event]);
+  }, [event, isPlatformAdmin]);
 
-  const fetchDepartments = async () => {
-    if (!authUser?.college_id) return;
+  useEffect(() => {
+    if (watchCollegeId) {
+      fetchDepartments(watchCollegeId);
+    }
+  }, [watchCollegeId]);
+
+  const fetchColleges = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('colleges')
+        .select('id, name')
+        .eq('is_active', true);
+
+      if (error) {
+        console.error('Error fetching colleges:', error);
+        return;
+      }
+
+      setColleges(data || []);
+    } catch (error) {
+      console.error('Error in fetchColleges:', error);
+    }
+  };
+
+  const fetchDepartments = async (collegeId?: string) => {
+    const targetCollegeId = collegeId || authUser?.college_id;
+    if (!targetCollegeId) return;
 
     try {
       const { data, error } = await supabase
         .from('college_departments')
         .select('id, name, code')
-        .eq('college_id', authUser.college_id);
+        .eq('college_id', targetCollegeId);
 
       if (error) {
         console.error('Error fetching departments:', error);
@@ -109,7 +141,9 @@ export default function EventForm({ event, onSuccess, onCancel }: EventFormProps
   };
 
   const onSubmit = async (data: EventFormData) => {
-    if (!authUser?.college_id) {
+    const targetCollegeId = data.college_id || authUser?.college_id;
+    
+    if (!targetCollegeId) {
       toast.error('College information missing');
       return;
     }
@@ -123,11 +157,6 @@ export default function EventForm({ event, onSuccess, onCancel }: EventFormProps
         .filter(doc => doc.trim())
         .map(doc => doc.trim());
 
-      // Convert target_departments to the proper enum type
-      const targetDepartments = data.target_departments?.length 
-        ? data.target_departments as DepartmentEnum[]
-        : null;
-
       const eventData = {
         title: data.title,
         description: data.description,
@@ -135,17 +164,17 @@ export default function EventForm({ event, onSuccess, onCancel }: EventFormProps
         start_time: data.start_time,
         end_time: data.end_time,
         is_online: data.is_online,
-        is_public: data.is_public,
-        college_id: authUser.college_id,
-        organizer_id: authUser.id,
+        is_public: true, // Always public as per requirement
+        college_id: targetCollegeId,
+        organizer_id: authUser!.id,
         preparation_docs: prepDocs.length > 0 ? prepDocs : null,
-        target_departments: targetDepartments,
+        target_departments: data.target_departments?.length ? data.target_departments as any : null,
+        target_years: data.target_years?.length ? data.target_years : null,
         max_participants: data.max_participants || null,
         registration_opens_at: data.registration_opens_at || null,
         registration_closes_at: data.registration_closes_at || null,
         virtual_link: data.is_online ? data.virtual_link : null,
-        physical_location: !data.is_online ? (data.physical_location || data.location) : null,
-        location: data.location || null,
+        physical_location: !data.is_online ? data.physical_location : null,
       };
 
       if (event) {
@@ -168,9 +197,9 @@ export default function EventForm({ event, onSuccess, onCancel }: EventFormProps
       }
 
       onSuccess();
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error saving event:', error);
-      toast.error('Failed to save event');
+      toast.error(error.message || 'Failed to save event');
     } finally {
       setLoading(false);
     }
@@ -190,9 +219,12 @@ export default function EventForm({ event, onSuccess, onCancel }: EventFormProps
     'Other'
   ];
 
+  const yearOptions = [1, 2, 3, 4];
+
   return (
     <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        {/* Event Title */}
         <div className="md:col-span-2">
           <Label htmlFor="title">Event Title *</Label>
           <Input
@@ -201,9 +233,32 @@ export default function EventForm({ event, onSuccess, onCancel }: EventFormProps
             placeholder="Enter event title"
           />
           {form.formState.errors.title && (
-            <p className="text-sm text-red-600 mt-1">{form.formState.errors.title.message}</p>
+            <p className="text-sm text-destructive mt-1">{form.formState.errors.title.message}</p>
           )}
         </div>
+
+        {/* College Selection for Platform Admin */}
+        {isPlatformAdmin && (
+          <div>
+            <Label htmlFor="college_id">College *</Label>
+            <Select 
+              value={form.watch('college_id')} 
+              onValueChange={(value) => form.setValue('college_id', value)}
+            >
+              <SelectTrigger>
+                <SelectValue placeholder="Select college" />
+              </SelectTrigger>
+              <SelectContent>
+                {colleges.map((college) => (
+                  <SelectItem key={college.id} value={college.id}>{college.name}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            {form.formState.errors.college_id && (
+              <p className="text-sm text-destructive mt-1">{form.formState.errors.college_id.message}</p>
+            )}
+          </div>
+        )}
 
         {/* Event Type */}
         <div>
@@ -222,18 +277,8 @@ export default function EventForm({ event, onSuccess, onCancel }: EventFormProps
             </SelectContent>
           </Select>
           {form.formState.errors.event_type && (
-            <p className="text-sm text-red-600 mt-1">{form.formState.errors.event_type.message}</p>
+            <p className="text-sm text-destructive mt-1">{form.formState.errors.event_type.message}</p>
           )}
-        </div>
-
-        {/* Public Event */}
-        <div className="flex items-center space-x-2">
-          <Switch
-            id="is_public"
-            checked={form.watch('is_public')}
-            onCheckedChange={(checked) => form.setValue('is_public', checked)}
-          />
-          <Label htmlFor="is_public">Public Event</Label>
         </div>
 
         {/* Start Time */}
@@ -245,7 +290,7 @@ export default function EventForm({ event, onSuccess, onCancel }: EventFormProps
             {...form.register('start_time')}
           />
           {form.formState.errors.start_time && (
-            <p className="text-sm text-red-600 mt-1">{form.formState.errors.start_time.message}</p>
+            <p className="text-sm text-destructive mt-1">{form.formState.errors.start_time.message}</p>
           )}
         </div>
 
@@ -258,18 +303,21 @@ export default function EventForm({ event, onSuccess, onCancel }: EventFormProps
             {...form.register('end_time')}
           />
           {form.formState.errors.end_time && (
-            <p className="text-sm text-red-600 mt-1">{form.formState.errors.end_time.message}</p>
+            <p className="text-sm text-destructive mt-1">{form.formState.errors.end_time.message}</p>
           )}
         </div>
 
         {/* Max Participants */}
         <div>
-          <Label htmlFor="max_participants">Max Participants</Label>
+          <Label htmlFor="max_participants">Max Participants (optional)</Label>
           <Input
             id="max_participants"
             type="number"
             min="1"
-            {...form.register('max_participants', { valueAsNumber: true })}
+            {...form.register('max_participants', { 
+              valueAsNumber: true,
+              setValueAs: (value) => value === '' ? null : Number(value)
+            })}
             placeholder="Leave empty for unlimited"
           />
         </div>
@@ -295,7 +343,7 @@ export default function EventForm({ event, onSuccess, onCancel }: EventFormProps
             placeholder="https://meet.google.com/... or Zoom link"
           />
           {form.formState.errors.virtual_link && (
-            <p className="text-sm text-red-600 mt-1">{form.formState.errors.virtual_link.message}</p>
+            <p className="text-sm text-destructive mt-1">{form.formState.errors.virtual_link.message}</p>
           )}
         </div>
       ) : (
@@ -307,7 +355,7 @@ export default function EventForm({ event, onSuccess, onCancel }: EventFormProps
             placeholder="Building, Room Number, Address"
           />
           {form.formState.errors.physical_location && (
-            <p className="text-sm text-red-600 mt-1">{form.formState.errors.physical_location.message}</p>
+            <p className="text-sm text-destructive mt-1">{form.formState.errors.physical_location.message}</p>
           )}
         </div>
       )}
@@ -343,14 +391,14 @@ export default function EventForm({ event, onSuccess, onCancel }: EventFormProps
           rows={4}
         />
         {form.formState.errors.description && (
-          <p className="text-sm text-red-600 mt-1">{form.formState.errors.description.message}</p>
+          <p className="text-sm text-destructive mt-1">{form.formState.errors.description.message}</p>
         )}
       </div>
 
       {/* Target Departments */}
       {departments.length > 0 && (
         <div>
-          <Label>Target Departments (leave empty for all)</Label>
+          <Label>Target Departments (leave empty for all departments)</Label>
           <div className="grid grid-cols-2 md:grid-cols-3 gap-2 mt-2">
             {departments.map((dept) => (
               <div key={dept.id} className="flex items-center space-x-2">
@@ -374,6 +422,32 @@ export default function EventForm({ event, onSuccess, onCancel }: EventFormProps
           </div>
         </div>
       )}
+
+      {/* Target Years */}
+      <div>
+        <Label>Target Years (leave empty for all years)</Label>
+        <div className="flex gap-4 mt-2">
+          {yearOptions.map((year) => (
+            <div key={year} className="flex items-center space-x-2">
+              <Checkbox
+                id={`year-${year}`}
+                checked={form.watch('target_years')?.includes(year) || false}
+                onCheckedChange={(checked) => {
+                  const current = form.watch('target_years') || [];
+                  if (checked) {
+                    form.setValue('target_years', [...current, year]);
+                  } else {
+                    form.setValue('target_years', current.filter(y => y !== year));
+                  }
+                }}
+              />
+              <Label htmlFor={`year-${year}`} className="text-sm">
+                Year {year}
+              </Label>
+            </div>
+          ))}
+        </div>
+      </div>
 
       {/* Preparation Documents */}
       <div>

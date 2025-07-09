@@ -85,7 +85,7 @@ export type Database = {
           created_at: string | null
           event_id: string
           id: string
-          rating: number
+          rating: number | null
           user_id: string
         }
         Insert: {
@@ -93,7 +93,7 @@ export type Database = {
           created_at?: string | null
           event_id: string
           id?: string
-          rating: number
+          rating?: number | null
           user_id: string
         }
         Update: {
@@ -101,7 +101,7 @@ export type Database = {
           created_at?: string | null
           event_id?: string
           id?: string
-          rating?: number
+          rating?: number | null
           user_id?: string
         }
         Relationships: [

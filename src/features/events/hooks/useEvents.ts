@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { useSupabase } from '@/hooks/useSupabase';
 import { useAuth } from '@/hooks/useAuth';
@@ -19,18 +18,37 @@ export function useEvents() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const fetchEvents = async () => {
+  const fetchEvents = async (filter?: string) => {
     if (!authUser) return;
 
     try {
       setLoading(true);
       setError(null);
       
-      // Simplified query that works with the new RLS policies
-      const { data: eventsData, error } = await supabase
+      // Fetch all events based on RLS policies
+      let query = supabase
         .from('events')
         .select('*')
         .order('start_time', { ascending: true });
+
+      // Apply filtering based on user requirements
+      if (filter && filter !== 'all' && filter !== 'events-for-me') {
+        const now = new Date().toISOString();
+        
+        switch (filter) {
+          case 'upcoming':
+            query = query.gt('start_time', now);
+            break;
+          case 'past':
+            query = query.lt('end_time', now);
+            break;
+          case 'registered':
+            // This will be handled in the frontend filtering
+            break;
+        }
+      }
+
+      const { data: eventsData, error } = await query;
 
       if (error) {
         throw error;
@@ -76,6 +94,46 @@ export function useEvents() {
     } finally {
       setLoading(false);
     }
+  };
+
+  const filterEvents = (events: EventWithDetails[], filter: string, userRole?: string, userDepartmentId?: string) => {
+    const now = new Date();
+    
+    return events.filter(event => {
+      const eventStart = new Date(event.start_time);
+      const eventEnd = new Date(event.end_time);
+
+      switch (filter) {
+        case 'events-for-me':
+          // Show events relevant to the user based on their role and department
+          if (userRole === 'platform_admin') {
+            return true; // Platform admin sees all events
+          }
+          if (userRole === 'faculty') {
+            // Faculty see all events in their college
+            return true;
+          }
+          if (userRole === 'student' || userRole === 'mentor') {
+            // Events for their department or global events
+            return !event.target_departments || event.target_departments.length === 0 || 
+                   (userDepartmentId && event.target_departments.some(dept => dept === userDepartmentId));
+          }
+          return true;
+        
+        case 'upcoming':
+          return eventStart > now;
+        
+        case 'past':
+          return eventEnd < now;
+        
+        case 'registered':
+          return event.user_registered;
+        
+        case 'all':
+        default:
+          return true;
+      }
+    });
   };
 
   const registerForEvent = async (eventId: string) => {
@@ -128,6 +186,11 @@ export function useEvents() {
   const submitFeedback = async (eventId: string, rating?: number, comment?: string) => {
     if (!authUser) return { success: false, error: 'Not authenticated' };
 
+    // Validate that at least one field is provided
+    if (!rating && !comment?.trim()) {
+      return { success: false, error: 'Please provide either a rating or comment' };
+    }
+
     try {
       const feedbackData: any = {
         event_id: eventId,
@@ -171,6 +234,27 @@ export function useEvents() {
     }
   };
 
+  const deleteEvent = async (eventId: string) => {
+    if (!authUser) return { success: false, error: 'Not authenticated' };
+
+    try {
+      const { error } = await supabase
+        .from('events')
+        .delete()
+        .eq('id', eventId);
+
+      if (error) throw error;
+
+      toast.success('Event deleted successfully!');
+      await fetchEvents(); // Refresh events
+      return { success: true };
+    } catch (err: any) {
+      const errorMessage = err.message || 'Failed to delete event';
+      toast.error(errorMessage);
+      return { success: false, error: errorMessage };
+    }
+  };
+
   useEffect(() => {
     if (authUser) {
       fetchEvents();
@@ -182,8 +266,10 @@ export function useEvents() {
     loading,
     error,
     fetchEvents,
+    filterEvents,
     registerForEvent,
     submitFeedback,
+    deleteEvent,
     refetch: fetchEvents
   };
 }
