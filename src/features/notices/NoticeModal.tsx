@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -22,6 +23,7 @@ const noticeSchema = z.object({
   category_id: z.string().optional(),
   target_department_ids: z.array(z.string()).optional(),
   target_semesters: z.array(z.number()).optional(),
+  target_roles: z.array(z.string()).min(1, 'At least one target role is required'),
   is_pinned: z.boolean().default(false),
   link: z.string().url('Invalid URL').optional().or(z.literal('')),
   expires_at: z.string().optional(),
@@ -35,6 +37,13 @@ interface NoticeModalProps {
   notice?: NoticeWithCategory | null;
   onSuccess?: () => void;
 }
+
+const roleOptions = [
+  { value: 'student', label: 'Students' },
+  { value: 'faculty', label: 'Faculty' },
+  { value: 'mentor', label: 'Mentors' },
+  { value: 'platform_admin', label: 'Platform Admins' },
+];
 
 export function NoticeModal({ open, onOpenChange, notice, onSuccess }: NoticeModalProps) {
   const { user } = useUser();
@@ -63,6 +72,7 @@ export function NoticeModal({ open, onOpenChange, notice, onSuccess }: NoticeMod
       category_id: '',
       target_department_ids: [],
       target_semesters: [],
+      target_roles: ['student'],
       is_pinned: false,
       link: '',
       expires_at: '',
@@ -78,16 +88,28 @@ export function NoticeModal({ open, onOpenChange, notice, onSuccess }: NoticeMod
         category_id: notice.category_id || '',
         target_department_ids: notice.target_department_ids || [],
         target_semesters: notice.target_semesters || [],
+        target_roles: notice.target_roles || ['student'],
         is_pinned: notice.is_pinned || false,
         link: notice.link || '',
         expires_at: notice.expires_at ? new Date(notice.expires_at).toISOString().split('T')[0] : '',
       });
       setSelectedCollegeId(notice.college_id);
     } else {
-      form.reset();
-      setSelectedCollegeId(user?.college_id || '');
+      form.reset({
+        title: '',
+        content: '',
+        college_id: '',
+        category_id: '',
+        target_department_ids: [],
+        target_semesters: [],
+        target_roles: ['student'],
+        is_pinned: false,
+        link: '',
+        expires_at: '',
+      });
+      setSelectedCollegeId(user?.collegeId || '');
     }
-  }, [notice, form, user?.college_id]);
+  }, [notice, form, user?.collegeId, open]);
 
   const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
@@ -117,6 +139,13 @@ export function NoticeModal({ open, onOpenChange, notice, onSuccess }: NoticeMod
     }
   };
 
+  const handleClose = () => {
+    form.reset();
+    setUploadedFile(null);
+    setSelectedCollegeId('');
+    onOpenChange(false);
+  };
+
   const onSubmit = async (data: NoticeFormData) => {
     try {
       setUploading(true);
@@ -133,7 +162,7 @@ export function NoticeModal({ open, onOpenChange, notice, onSuccess }: NoticeMod
         content: data.content,
         college_id: selectedCollegeId,
         posted_by: user?.id!,
-        target_roles: ['faculty', 'platform_admin'] as any,
+        target_roles: data.target_roles as any,
         expires_at: data.expires_at ? new Date(data.expires_at).toISOString() : null,
         link: data.link || null,
         attachment_url: attachment_url || null,
@@ -152,10 +181,8 @@ export function NoticeModal({ open, onOpenChange, notice, onSuccess }: NoticeMod
         await createNotice.mutateAsync(noticeData);
       }
 
-      onOpenChange(false);
+      handleClose();
       onSuccess?.();
-      form.reset();
-      setUploadedFile(null);
     } catch (error) {
       console.error('Error saving notice:', error);
     } finally {
@@ -164,7 +191,7 @@ export function NoticeModal({ open, onOpenChange, notice, onSuccess }: NoticeMod
   };
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
+    <Dialog open={open} onOpenChange={handleClose}>
       <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>{isEdit ? 'Edit Notice' : 'Create New Notice'}</DialogTitle>
@@ -241,6 +268,35 @@ export function NoticeModal({ open, onOpenChange, notice, onSuccess }: NoticeMod
 
             <FormField
               control={form.control}
+              name="target_roles"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Target Roles *</FormLabel>
+                  <div className="grid grid-cols-2 gap-2">
+                    {roleOptions.map((role) => (
+                      <div key={role.value} className="flex items-center space-x-2">
+                        <Checkbox
+                          checked={field.value?.includes(role.value)}
+                          onCheckedChange={(checked) => {
+                            const currentValues = field.value || [];
+                            if (checked) {
+                              field.onChange([...currentValues, role.value]);
+                            } else {
+                              field.onChange(currentValues.filter(r => r !== role.value));
+                            }
+                          }}
+                        />
+                        <label className="text-sm">{role.label}</label>
+                      </div>
+                    ))}
+                  </div>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <FormField
+              control={form.control}
               name="category_id"
               render={({ field }) => (
                 <FormItem>
@@ -267,34 +323,36 @@ export function NoticeModal({ open, onOpenChange, notice, onSuccess }: NoticeMod
               )}
             />
 
-            <FormField
-              control={form.control}
-              name="target_department_ids"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Target Departments (optional)</FormLabel>
-                  <div className="grid grid-cols-2 gap-2 max-h-32 overflow-y-auto border rounded p-2">
-                    {departments?.map((dept) => (
-                      <div key={dept.id} className="flex items-center space-x-2">
-                        <Checkbox
-                          checked={field.value?.includes(dept.id)}
-                          onCheckedChange={(checked) => {
-                            const currentValues = field.value || [];
-                            if (checked) {
-                              field.onChange([...currentValues, dept.id]);
-                            } else {
-                              field.onChange(currentValues.filter(id => id !== dept.id));
-                            }
-                          }}
-                        />
-                        <label className="text-sm">{dept.name}</label>
-                      </div>
-                    ))}
-                  </div>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
+            {departments && departments.length > 0 && (
+              <FormField
+                control={form.control}
+                name="target_department_ids"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Target Departments (optional)</FormLabel>
+                    <div className="grid grid-cols-2 gap-2 max-h-32 overflow-y-auto border rounded p-2">
+                      {departments.map((dept) => (
+                        <div key={dept.id} className="flex items-center space-x-2">
+                          <Checkbox
+                            checked={field.value?.includes(dept.id)}
+                            onCheckedChange={(checked) => {
+                              const currentValues = field.value || [];
+                              if (checked) {
+                                field.onChange([...currentValues, dept.id]);
+                              } else {
+                                field.onChange(currentValues.filter(id => id !== dept.id));
+                              }
+                            }}
+                          />
+                          <label className="text-sm">{dept.name}</label>
+                        </div>
+                      ))}
+                    </div>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            )}
 
             <FormField
               control={form.control}
@@ -420,7 +478,7 @@ export function NoticeModal({ open, onOpenChange, notice, onSuccess }: NoticeMod
               <Button
                 type="button"
                 variant="outline"
-                onClick={() => onOpenChange(false)}
+                onClick={handleClose}
               >
                 Cancel
               </Button>

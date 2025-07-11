@@ -10,6 +10,7 @@ export function useUser() {
     role: authUser?.role || null,
     department: null, // This would need to be fetched separately based on role
     collegeId: authUser?.college_id || null,
+    college_id: authUser?.college_id || null, // Add both for compatibility
     displayName: authUser?.display_name || null,
     user: authUser,
     loading,
