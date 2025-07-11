@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -107,9 +106,9 @@ export function NoticeModal({ open, onOpenChange, notice, onSuccess }: NoticeMod
         link: '',
         expires_at: '',
       });
-      setSelectedCollegeId(user?.collegeId || '');
+      setSelectedCollegeId(user?.college_id || '');
     }
-  }, [notice, form, user?.collegeId, open]);
+  }, [notice, form, user?.college_id, open]);
 
   const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
