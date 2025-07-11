@@ -34,7 +34,7 @@ export function NoticeCard({ notice, onEdit }: NoticeCardProps) {
     }
   };
 
-  const truncateContent = (content: string, maxLength: number = 120) => {
+  const truncateContent = (content: string, maxLength: number = 150) => {
     if (content.length <= maxLength) return content;
     return content.substring(0, maxLength) + '...';
   };
@@ -51,21 +51,17 @@ export function NoticeCard({ notice, onEdit }: NoticeCardProps) {
 
   return (
     <>
-      <Card className="h-full flex flex-col cursor-pointer hover:shadow-md transition-shadow max-w-full" onClick={() => setShowDetail(true)}>
-        <CardHeader className="pb-3 flex-shrink-0">
-          <div className="flex items-start justify-between gap-2">
-            <div className="flex-1 min-w-0">
-              <CardTitle className="text-lg leading-tight break-words">
-                <span className="inline-flex items-center gap-2 flex-wrap">
-                  <span className="break-words">{notice.title}</span>
-                  {isImportant && (
-                    <Flag className="h-4 w-4 text-destructive fill-destructive flex-shrink-0" />
-                  )}
-                </span>
-              </CardTitle>
-            </div>
+      <Card className="h-full cursor-pointer hover:shadow-md transition-shadow" onClick={() => setShowDetail(true)}>
+        <CardHeader className="pb-3">
+          <div className="flex items-start justify-between">
+            <CardTitle className="text-lg leading-tight">
+              {notice.title}
+              {isImportant && (
+                <Flag className="inline-block ml-2 h-4 w-4 text-destructive fill-destructive" />
+              )}
+            </CardTitle>
             {canEdit && (
-              <div className="flex gap-1 flex-shrink-0" onClick={(e) => e.stopPropagation()}>
+              <div className="flex gap-1" onClick={(e) => e.stopPropagation()}>
                 <Button
                   variant="ghost"
                   size="sm"
@@ -108,69 +104,65 @@ export function NoticeCard({ notice, onEdit }: NoticeCardProps) {
           </div>
           <div className="flex flex-wrap gap-2 mt-2">
             {notice.notice_categories?.name && (
-              <Badge variant="secondary" className="text-xs">
+              <Badge variant="secondary">
                 {notice.notice_categories.name}
               </Badge>
             )}
             {isImportant && (
-              <Badge variant="destructive" className="text-xs">Important</Badge>
+              <Badge variant="destructive">Important</Badge>
             )}
           </div>
         </CardHeader>
 
-        <CardContent className="pb-3 flex-1 min-h-0">
-          <div className="space-y-3">
-            <p className="text-muted-foreground text-sm leading-relaxed break-words overflow-hidden">
-              {truncateContent(notice.content)}
-            </p>
-            
-            <div className="flex items-center justify-between text-xs text-muted-foreground">
-              <span className="truncate mr-2">By {getCreatorName()}</span>
-              <span className="flex-shrink-0">{format(new Date(notice.created_at), 'MMM dd, yyyy')}</span>
-            </div>
+        <CardContent className="pb-3">
+          <p className="text-muted-foreground text-sm mb-3">
+            {truncateContent(notice.content)}
+          </p>
+          
+          <div className="flex items-center justify-between text-xs text-muted-foreground">
+            <span>By {getCreatorName()}</span>
+            <span>{format(new Date(notice.created_at), 'MMM dd, yyyy')}</span>
           </div>
         </CardContent>
 
-        <CardFooter className="pt-0 flex-shrink-0" onClick={(e) => e.stopPropagation()}>
-          <div className="flex gap-2 w-full">
+        <CardFooter className="pt-0 flex gap-2" onClick={(e) => e.stopPropagation()}>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => setShowDetail(true)}
+            className="flex-1"
+          >
+            <Eye className="h-4 w-4 mr-2" />
+            View Details
+          </Button>
+          
+          {notice.link && (
             <Button
               variant="outline"
               size="sm"
-              onClick={() => setShowDetail(true)}
-              className="flex-1 min-w-0"
+              asChild
+              className="flex-1"
             >
-              <Eye className="h-4 w-4 mr-2 flex-shrink-0" />
-              <span className="truncate">View Details</span>
+              <a href={notice.link} target="_blank" rel="noopener noreferrer">
+                <ExternalLink className="h-4 w-4 mr-2" />
+                Link
+              </a>
             </Button>
-            
-            {notice.link && (
-              <Button
-                variant="outline"
-                size="sm"
-                asChild
-                className="flex-1 min-w-0"
-              >
-                <a href={notice.link} target="_blank" rel="noopener noreferrer">
-                  <ExternalLink className="h-4 w-4 mr-2 flex-shrink-0" />
-                  <span className="truncate">Link</span>
-                </a>
-              </Button>
-            )}
-            
-            {notice.attachment_url && (
-              <Button
-                variant="outline"
-                size="sm"
-                asChild
-                className="flex-1 min-w-0"
-              >
-                <a href={notice.attachment_url} target="_blank" rel="noopener noreferrer">
-                  <Paperclip className="h-4 w-4 mr-2 flex-shrink-0" />
-                  <span className="truncate">File</span>
-                </a>
-              </Button>
-            )}
-          </div>
+          )}
+          
+          {notice.attachment_url && (
+            <Button
+              variant="outline"
+              size="sm"
+              asChild
+              className="flex-1"
+            >
+              <a href={notice.attachment_url} target="_blank" rel="noopener noreferrer">
+                <Paperclip className="h-4 w-4 mr-2" />
+                File
+              </a>
+            </Button>
+          )}
         </CardFooter>
       </Card>
 
