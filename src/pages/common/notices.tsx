@@ -1,5 +1,6 @@
 
-// Common notices page
+import NoticeBoard from "@/features/notices/NoticeBoard";
+
 export default function NoticesPage() {
-  return <div>Notices Page</div>;
+  return <NoticeBoard />;
 }

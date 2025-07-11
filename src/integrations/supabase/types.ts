@@ -580,6 +580,7 @@ export type Database = {
       }
       notices: {
         Row: {
+          attachment_url: string | null
           category_id: string | null
           college_id: string
           content: string
@@ -587,6 +588,7 @@ export type Database = {
           expires_at: string | null
           id: string
           is_pinned: boolean | null
+          link: string | null
           posted_by: string
           priority: number
           target_department_ids: string[] | null
@@ -595,6 +597,7 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          attachment_url?: string | null
           category_id?: string | null
           college_id: string
           content: string
@@ -602,6 +605,7 @@ export type Database = {
           expires_at?: string | null
           id?: string
           is_pinned?: boolean | null
+          link?: string | null
           posted_by: string
           priority?: number
           target_department_ids?: string[] | null
@@ -610,6 +614,7 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          attachment_url?: string | null
           category_id?: string | null
           college_id?: string
           content?: string
@@ -617,6 +622,7 @@ export type Database = {
           expires_at?: string | null
           id?: string
           is_pinned?: boolean | null
+          link?: string | null
           posted_by?: string
           priority?: number
           target_department_ids?: string[] | null
