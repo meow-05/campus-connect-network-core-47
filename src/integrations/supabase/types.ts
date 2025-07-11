@@ -593,6 +593,7 @@ export type Database = {
           priority: number
           target_department_ids: string[] | null
           target_roles: Database["public"]["Enums"]["user_role"][]
+          target_semesters: number[] | null
           title: string
           updated_at: string
         }
@@ -610,6 +611,7 @@ export type Database = {
           priority?: number
           target_department_ids?: string[] | null
           target_roles: Database["public"]["Enums"]["user_role"][]
+          target_semesters?: number[] | null
           title: string
           updated_at?: string
         }
@@ -627,6 +629,7 @@ export type Database = {
           priority?: number
           target_department_ids?: string[] | null
           target_roles?: Database["public"]["Enums"]["user_role"][]
+          target_semesters?: number[] | null
           title?: string
           updated_at?: string
         }

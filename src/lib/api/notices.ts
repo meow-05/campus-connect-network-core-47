@@ -1,3 +1,4 @@
+
 import { supabase } from "@/integrations/supabase/client";
 import { Notice, TablesInsert, TablesUpdate } from "@/types/db-types";
 

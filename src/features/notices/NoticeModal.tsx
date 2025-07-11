@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -21,7 +22,7 @@ const noticeSchema = z.object({
   college_id: z.string().optional(),
   category_id: z.string().optional(),
   target_department_ids: z.array(z.string()).optional(),
-  target_years: z.array(z.number()).optional(),
+  target_semesters: z.array(z.number()).optional(),
   is_pinned: z.boolean().default(false),
   link: z.string().url('Invalid URL').optional().or(z.literal('')),
   expires_at: z.string().optional(),
@@ -62,7 +63,7 @@ export function NoticeModal({ open, onOpenChange, notice, onSuccess }: NoticeMod
       college_id: '',
       category_id: '',
       target_department_ids: [],
-      target_years: [],
+      target_semesters: [],
       is_pinned: false,
       link: '',
       expires_at: '',
@@ -77,7 +78,7 @@ export function NoticeModal({ open, onOpenChange, notice, onSuccess }: NoticeMod
         college_id: notice.college_id,
         category_id: notice.category_id || '',
         target_department_ids: notice.target_department_ids || [],
-        target_years: (notice as any).target_years || [],
+        target_semesters: notice.target_semesters || [],
         is_pinned: notice.is_pinned || false,
         link: notice.link || '',
         expires_at: notice.expires_at ? new Date(notice.expires_at).toISOString().split('T')[0] : '',
@@ -85,9 +86,9 @@ export function NoticeModal({ open, onOpenChange, notice, onSuccess }: NoticeMod
       setSelectedCollegeId(notice.college_id);
     } else {
       form.reset();
-      setSelectedCollegeId(user?.college_id || '');
+      setSelectedCollegeId(user?.collegeId || '');
     }
-  }, [notice, form, user?.college_id]);
+  }, [notice, form, user?.collegeId]);
 
   const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
@@ -138,6 +139,7 @@ export function NoticeModal({ open, onOpenChange, notice, onSuccess }: NoticeMod
         link: data.link || null,
         attachment_url: attachment_url || null,
         target_department_ids: data.target_department_ids?.length ? data.target_department_ids : null,
+        target_semesters: data.target_semesters?.length ? data.target_semesters : null,
         category_id: data.category_id || null,
         is_pinned: data.is_pinned,
       };
@@ -297,25 +299,25 @@ export function NoticeModal({ open, onOpenChange, notice, onSuccess }: NoticeMod
 
             <FormField
               control={form.control}
-              name="target_years"
+              name="target_semesters"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Target Years (optional)</FormLabel>
-                  <div className="flex gap-4">
-                    {[1, 2, 3, 4].map((year) => (
-                      <div key={year} className="flex items-center space-x-2">
+                  <FormLabel>Target Semesters (optional)</FormLabel>
+                  <div className="flex gap-4 flex-wrap">
+                    {[1, 2, 3, 4, 5, 6, 7, 8].map((semester) => (
+                      <div key={semester} className="flex items-center space-x-2">
                         <Checkbox
-                          checked={field.value?.includes(year)}
+                          checked={field.value?.includes(semester)}
                           onCheckedChange={(checked) => {
                             const currentValues = field.value || [];
                             if (checked) {
-                              field.onChange([...currentValues, year]);
+                              field.onChange([...currentValues, semester]);
                             } else {
-                              field.onChange(currentValues.filter(y => y !== year));
+                              field.onChange(currentValues.filter(s => s !== semester));
                             }
                           }}
                         />
-                        <label className="text-sm">Year {year}</label>
+                        <label className="text-sm">Sem {semester}</label>
                       </div>
                     ))}
                   </div>
