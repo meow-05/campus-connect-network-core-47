@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -189,6 +190,16 @@ export function NoticeModal({ open, onOpenChange, notice, onSuccess }: NoticeMod
     }
   };
 
+  const getDepartmentMessage = () => {
+    if (isPlatformAdmin && !selectedCollegeId) {
+      return "Please select a college to see departments";
+    }
+    if ((!departments || departments.length === 0) && selectedCollegeId) {
+      return "No departments found for this college";
+    }
+    return null;
+  };
+
   return (
     <Dialog open={open} onOpenChange={handleClose}>
       <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
@@ -322,13 +333,18 @@ export function NoticeModal({ open, onOpenChange, notice, onSuccess }: NoticeMod
               )}
             />
 
-            {departments && departments.length > 0 && (
-              <FormField
-                control={form.control}
-                name="target_department_ids"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Target Departments (optional)</FormLabel>
+            {/* Always show department field */}
+            <FormField
+              control={form.control}
+              name="target_department_ids"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Target Departments (optional)</FormLabel>
+                  {getDepartmentMessage() ? (
+                    <div className="text-sm text-muted-foreground border rounded p-2">
+                      {getDepartmentMessage()}
+                    </div>
+                  ) : departments && departments.length > 0 ? (
                     <div className="grid grid-cols-2 gap-2 max-h-32 overflow-y-auto border rounded p-2">
                       {departments.map((dept) => (
                         <div key={dept.id} className="flex items-center space-x-2">
@@ -347,11 +363,15 @@ export function NoticeModal({ open, onOpenChange, notice, onSuccess }: NoticeMod
                         </div>
                       ))}
                     </div>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-            )}
+                  ) : (
+                    <div className="text-sm text-muted-foreground border rounded p-2">
+                      No departments available
+                    </div>
+                  )}
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
 
             <FormField
               control={form.control}

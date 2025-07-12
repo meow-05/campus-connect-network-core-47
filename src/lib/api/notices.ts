@@ -26,7 +26,7 @@ export const noticesApi = {
       .select(`
         *,
         notice_categories(name),
-        users(display_name, email)
+        users!notices_posted_by_fkey(display_name, email)
       `)
       .order('created_at', { ascending: false });
 
@@ -64,7 +64,7 @@ export const noticesApi = {
       .select(`
         *,
         notice_categories(name),
-        users(display_name, email)
+        users!notices_posted_by_fkey(display_name, email)
       `)
       .eq('id', id)
       .single();

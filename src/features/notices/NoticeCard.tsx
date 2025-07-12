@@ -46,22 +46,22 @@ export function NoticeCard({ notice, onEdit }: NoticeCardProps) {
     if (notice.users?.email) {
       return notice.users.email.split('@')[0];
     }
-    return 'Unknown User';
+    return 'Anonymous';
   };
 
   return (
     <>
-      <Card className="h-full cursor-pointer hover:shadow-md transition-shadow" onClick={() => setShowDetail(true)}>
+      <Card className="h-full cursor-pointer hover:shadow-md transition-shadow max-w-md w-full" onClick={() => setShowDetail(true)}>
         <CardHeader className="pb-3">
-          <div className="flex items-start justify-between">
-            <CardTitle className="text-lg leading-tight">
+          <div className="flex items-start justify-between gap-2">
+            <CardTitle className="text-lg leading-tight break-words overflow-hidden">
               {notice.title}
               {isImportant && (
-                <Flag className="inline-block ml-2 h-4 w-4 text-destructive fill-destructive" />
+                <Flag className="inline-block ml-2 h-4 w-4 text-destructive fill-destructive flex-shrink-0" />
               )}
             </CardTitle>
             {canEdit && (
-              <div className="flex gap-1" onClick={(e) => e.stopPropagation()}>
+              <div className="flex gap-1 flex-shrink-0" onClick={(e) => e.stopPropagation()}>
                 <Button
                   variant="ghost"
                   size="sm"
@@ -115,13 +115,13 @@ export function NoticeCard({ notice, onEdit }: NoticeCardProps) {
         </CardHeader>
 
         <CardContent className="pb-3">
-          <p className="text-muted-foreground text-sm mb-3">
+          <p className="text-muted-foreground text-sm mb-3 break-words overflow-hidden">
             {truncateContent(notice.content)}
           </p>
           
           <div className="flex items-center justify-between text-xs text-muted-foreground">
-            <span>By {getCreatorName()}</span>
-            <span>{format(new Date(notice.created_at), 'MMM dd, yyyy')}</span>
+            <span className="break-words overflow-hidden max-w-[60%]">By {getCreatorName()}</span>
+            <span className="flex-shrink-0">{format(new Date(notice.created_at), 'MMM dd, yyyy')}</span>
           </div>
         </CardContent>
 
@@ -130,10 +130,10 @@ export function NoticeCard({ notice, onEdit }: NoticeCardProps) {
             variant="outline"
             size="sm"
             onClick={() => setShowDetail(true)}
-            className="flex-1"
+            className="flex-1 min-w-0"
           >
-            <Eye className="h-4 w-4 mr-2" />
-            View Details
+            <Eye className="h-4 w-4 mr-2 flex-shrink-0" />
+            <span className="truncate">View Details</span>
           </Button>
           
           {notice.link && (
@@ -141,11 +141,11 @@ export function NoticeCard({ notice, onEdit }: NoticeCardProps) {
               variant="outline"
               size="sm"
               asChild
-              className="flex-1"
+              className="flex-1 min-w-0"
             >
               <a href={notice.link} target="_blank" rel="noopener noreferrer">
-                <ExternalLink className="h-4 w-4 mr-2" />
-                Link
+                <ExternalLink className="h-4 w-4 mr-2 flex-shrink-0" />
+                <span className="truncate">Link</span>
               </a>
             </Button>
           )}
@@ -155,11 +155,11 @@ export function NoticeCard({ notice, onEdit }: NoticeCardProps) {
               variant="outline"
               size="sm"
               asChild
-              className="flex-1"
+              className="flex-1 min-w-0"
             >
               <a href={notice.attachment_url} target="_blank" rel="noopener noreferrer">
-                <Paperclip className="h-4 w-4 mr-2" />
-                File
+                <Paperclip className="h-4 w-4 mr-2 flex-shrink-0" />
+                <span className="truncate">File</span>
               </a>
             </Button>
           )}
