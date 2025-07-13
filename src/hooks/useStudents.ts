@@ -33,7 +33,7 @@ export function useStudents() {
             avatar_path,
             college_id
           ),
-          department:college_departments!students_department_id_fkey (
+          department:college_departments!fk_student_department (
             id,
             name
           )
@@ -72,7 +72,7 @@ export function useStudents() {
       // Filter out any students with missing user or department data
       const validStudents = data.filter(student => {
         const hasUser = student.user && student.user.display_name && student.user.email;
-        const hasDepartment = student.department && student.department.name;
+        const hasDepartment = student.department && typeof student.department === 'object' && !('error' in student.department) && student.department.name;
         const isValid = hasUser && hasDepartment;
         
         if (!isValid) {
@@ -81,7 +81,8 @@ export function useStudents() {
             has_user: !!student.user,
             user_details: student.user,
             has_department: !!student.department,
-            department_details: student.department
+            department_details: student.department,
+            department_has_error: student.department && 'error' in student.department
           });
         }
         
