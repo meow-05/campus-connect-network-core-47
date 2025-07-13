@@ -57,7 +57,7 @@ export function useConnections() {
           const profile = profiles[0];
           connectionUsers.push({
             ...profile,
-            connection_status: connection.status,
+            connection_status: connection.status as 'pending' | 'accepted' | 'rejected',
             connection_id: connection.id,
             is_requester: connection.requester_id === user.id
           });

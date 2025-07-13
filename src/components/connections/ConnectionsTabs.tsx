@@ -5,7 +5,7 @@ import { Badge } from '@/components/ui/badge';
 import { ConnectionCard } from './ConnectionCard';
 import { useConnections } from '@/hooks/useConnections';
 import { Skeleton } from '@/components/ui/skeleton';
-import { EmptyState } from '@/components/shared/EmptyState';
+import EmptyState from '@/components/shared/EmptyState';
 import { Users, UserPlus, Clock, Search } from 'lucide-react';
 
 export function ConnectionsTabs() {
@@ -77,7 +77,6 @@ export function ConnectionsTabs() {
       <TabsContent value="connections" className="space-y-4">
         {connections.length === 0 ? (
           <EmptyState
-            icon={Users}
             title="No connections yet"
             description="Start connecting with fellow students, faculty, and mentors in your network."
           />
@@ -100,7 +99,6 @@ export function ConnectionsTabs() {
       <TabsContent value="requests" className="space-y-4">
         {pendingRequests.length === 0 ? (
           <EmptyState
-            icon={Clock}
             title="No pending requests"
             description="You don't have any pending connection requests at the moment."
           />
@@ -122,7 +120,6 @@ export function ConnectionsTabs() {
       <TabsContent value="sent" className="space-y-4">
         {sentRequests.length === 0 ? (
           <EmptyState
-            icon={UserPlus}
             title="No sent requests"
             description="You haven't sent any connection requests yet."
           />
@@ -149,7 +146,6 @@ export function ConnectionsTabs() {
           </div>
         ) : suggestions.length === 0 ? (
           <EmptyState
-            icon={Search}
             title="No suggestions available"
             description="We couldn't find any connection suggestions for you at the moment."
           />
