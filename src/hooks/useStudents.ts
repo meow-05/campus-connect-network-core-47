@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
@@ -24,7 +23,7 @@ export function useStudents() {
             email,
             avatar_path
           ),
-          department:college_departments!students_department_id_fkey (
+          department:college_departments (
             id,
             name
           )
@@ -43,7 +42,8 @@ export function useStudents() {
         student.user && 
         student.department && 
         typeof student.department === 'object' && 
-        'name' in student.department
+        'name' in student.department &&
+        student.department.name
       );
       
       console.log('Valid students after filtering:', validStudents);
