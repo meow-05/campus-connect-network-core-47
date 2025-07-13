@@ -21,19 +21,19 @@ export function useStudents() {
         return [];
       }
 
-      // Let's test a simpler query first to debug the join issue
+      // Use explicit inner joins to ensure we get department data
       let query = supabase
         .from('students')
         .select(`
           *,
-          users (
+          users!inner (
             id,
             display_name,
             email,
             avatar_path,
             college_id
           ),
-          college_departments (
+          college_departments!inner (
             id,
             name
           )
