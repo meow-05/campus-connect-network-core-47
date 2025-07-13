@@ -1351,6 +1351,79 @@ export type Database = {
           },
         ]
       }
+      user_activity_log: {
+        Row: {
+          action_type: string
+          id: string
+          notes: string | null
+          performed_by: string | null
+          role_of_actor: Database["public"]["Enums"]["user_role"] | null
+          timestamp: string | null
+          user_id: string
+        }
+        Insert: {
+          action_type: string
+          id?: string
+          notes?: string | null
+          performed_by?: string | null
+          role_of_actor?: Database["public"]["Enums"]["user_role"] | null
+          timestamp?: string | null
+          user_id: string
+        }
+        Update: {
+          action_type?: string
+          id?: string
+          notes?: string | null
+          performed_by?: string | null
+          role_of_actor?: Database["public"]["Enums"]["user_role"] | null
+          timestamp?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_activity_log_performed_by_fkey"
+            columns: ["performed_by"]
+            isOneToOne: false
+            referencedRelation: "admin_users"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "user_activity_log_performed_by_fkey"
+            columns: ["performed_by"]
+            isOneToOne: false
+            referencedRelation: "available_mentors"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "user_activity_log_performed_by_fkey"
+            columns: ["performed_by"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "user_activity_log_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "admin_users"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "user_activity_log_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "available_mentors"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "user_activity_log_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       user_connections: {
         Row: {
           created_at: string
@@ -1421,6 +1494,82 @@ export type Database = {
           },
         ]
       }
+      user_reports: {
+        Row: {
+          created_at: string | null
+          id: string
+          message: string | null
+          reason: string
+          reported_by: string
+          reported_user_id: string
+          resolved: boolean | null
+          role_of_reported_by: Database["public"]["Enums"]["user_role"]
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          message?: string | null
+          reason: string
+          reported_by: string
+          reported_user_id: string
+          resolved?: boolean | null
+          role_of_reported_by: Database["public"]["Enums"]["user_role"]
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          message?: string | null
+          reason?: string
+          reported_by?: string
+          reported_user_id?: string
+          resolved?: boolean | null
+          role_of_reported_by?: Database["public"]["Enums"]["user_role"]
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_reports_reported_by_fkey"
+            columns: ["reported_by"]
+            isOneToOne: false
+            referencedRelation: "admin_users"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "user_reports_reported_by_fkey"
+            columns: ["reported_by"]
+            isOneToOne: false
+            referencedRelation: "available_mentors"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "user_reports_reported_by_fkey"
+            columns: ["reported_by"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "user_reports_reported_user_id_fkey"
+            columns: ["reported_user_id"]
+            isOneToOne: false
+            referencedRelation: "admin_users"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "user_reports_reported_user_id_fkey"
+            columns: ["reported_user_id"]
+            isOneToOne: false
+            referencedRelation: "available_mentors"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "user_reports_reported_user_id_fkey"
+            columns: ["reported_user_id"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       users: {
         Row: {
           avatar_path: string | null
@@ -1429,6 +1578,7 @@ export type Database = {
           display_name: string | null
           email: string
           id: string
+          is_active: boolean | null
           is_verified: boolean | null
           last_active_at: string | null
           password_hash: string
@@ -1442,6 +1592,7 @@ export type Database = {
           display_name?: string | null
           email: string
           id?: string
+          is_active?: boolean | null
           is_verified?: boolean | null
           last_active_at?: string | null
           password_hash: string
@@ -1455,6 +1606,7 @@ export type Database = {
           display_name?: string | null
           email?: string
           id?: string
+          is_active?: boolean | null
           is_verified?: boolean | null
           last_active_at?: string | null
           password_hash?: string
