@@ -21,19 +21,19 @@ export function useStudents() {
         return [];
       }
 
-      // Build the base query with proper join syntax
+      // Build the query with proper aliases - this is the correct syntax
       let query = supabase
         .from('students')
         .select(`
           *,
-          user:users!inner (
+          user:users!students_user_id_fkey (
             id,
             display_name,
             email,
             avatar_path,
             college_id
           ),
-          department:college_departments!inner (
+          department:college_departments!fk_student_department (
             id,
             name
           )
@@ -49,6 +49,7 @@ export function useStudents() {
       } else if (user.college_id) {
         // For faculty, filter by their college through the user's college_id
         console.log('Filtering students by college_id:', user.college_id);
+        // Filter by the nested user's college_id - correct syntax for joined tables
         query = query.eq('user.college_id', user.college_id);
       } else {
         console.log('No college_id for non-admin user, returning empty array');
@@ -60,6 +61,11 @@ export function useStudents() {
       const { data, error } = await query;
 
       console.log('Raw students query result:', { data, error });
+      console.log('Query details:', {
+        role: user.role,
+        college_id: user.college_id,
+        data_length: data?.length || 0
+      });
 
       if (error) {
         console.error('Error fetching students:', error);
