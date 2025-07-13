@@ -21,19 +21,19 @@ export function useStudents() {
         return [];
       }
 
-      // Build the query with proper aliases - this is the correct syntax
+      // Let's test a simpler query first to debug the join issue
       let query = supabase
         .from('students')
         .select(`
           *,
-          user:users!students_user_id_fkey (
+          users (
             id,
             display_name,
             email,
             avatar_path,
             college_id
           ),
-          department:college_departments!fk_student_department (
+          college_departments (
             id,
             name
           )
@@ -49,8 +49,8 @@ export function useStudents() {
       } else if (user.college_id) {
         // For faculty, filter by their college through the user's college_id
         console.log('Filtering students by college_id:', user.college_id);
-        // Filter by the nested user's college_id - correct syntax for joined tables
-        query = query.eq('user.college_id', user.college_id);
+        // Filter by the nested user's college_id
+        query = query.eq('users.college_id', user.college_id);
       } else {
         console.log('No college_id for non-admin user, returning empty array');
         return [];
@@ -79,17 +79,17 @@ export function useStudents() {
 
       // Filter out any students with missing user or department data
       const validStudents = data.filter(student => {
-        const hasUser = student.user && student.user.display_name && student.user.email;
-        const hasDepartment = student.department && student.department.name;
+        const hasUser = student.users && student.users.display_name && student.users.email;
+        const hasDepartment = student.college_departments && student.college_departments.name;
         const isValid = hasUser && hasDepartment;
         
         if (!isValid) {
           console.log('Invalid student filtered out:', {
             student_id: student.user_id,
-            has_user: !!student.user,
-            user_details: student.user,
-            has_department: !!student.department,
-            department_details: student.department
+            has_user: !!student.users,
+            user_details: student.users,
+            has_department: !!student.college_departments,
+            department_details: student.college_departments
           });
         }
         

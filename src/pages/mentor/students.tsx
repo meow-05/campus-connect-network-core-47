@@ -18,8 +18,8 @@ export default function MentorStudents() {
   const filteredStudents = useMemo(() => {
     return students.filter(student => {
       const matchesSearch = !searchTerm || 
-        student.user.display_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        student.user.email.toLowerCase().includes(searchTerm.toLowerCase());
+        student.users?.display_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        student.users?.email?.toLowerCase().includes(searchTerm.toLowerCase());
       
       const matchesDepartment = !selectedDepartment || 
         student.department_id === selectedDepartment;
@@ -100,7 +100,18 @@ export default function MentorStudents() {
           {filteredStudents.map((student) => (
             <StudentCard
               key={student.user_id}
-              student={student}
+              student={{
+                ...student,
+                user: {
+                  id: student.users?.id || '',
+                  display_name: student.users?.display_name || '',
+                  email: student.users?.email || '',
+                  avatar_path: student.users?.avatar_path
+                },
+                department: {
+                  name: student.college_departments?.name || ''
+                }
+              }}
               userRole="mentor"
             />
           ))}
