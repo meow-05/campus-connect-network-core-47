@@ -12,6 +12,8 @@ export function useStudents() {
   const { data: students = [], isLoading, error } = useQuery({
     queryKey: ['students', user?.college_id],
     queryFn: async () => {
+      console.log('Fetching students with college_id:', user?.college_id);
+      
       const { data, error } = await supabase
         .from('students')
         .select(`
@@ -29,8 +31,23 @@ export function useStudents() {
         `)
         .order('created_at', { ascending: false });
 
-      if (error) throw error;
-      return data || [];
+      console.log('Students query result:', { data, error });
+
+      if (error) {
+        console.error('Error fetching students:', error);
+        throw error;
+      }
+      
+      // Filter out any students with missing user or department data
+      const validStudents = (data || []).filter(student => 
+        student.user && 
+        student.department && 
+        typeof student.department === 'object' && 
+        'name' in student.department
+      );
+      
+      console.log('Valid students after filtering:', validStudents);
+      return validStudents;
     },
     enabled: !!user?.college_id
   });
