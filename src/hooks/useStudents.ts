@@ -10,11 +10,19 @@ export function useStudents() {
   const queryClient = useQueryClient();
 
   const { data: students = [], isLoading, error } = useQuery({
-    queryKey: ['students', user?.college_id],
+    queryKey: ['students', user?.college_id, user?.role],
     queryFn: async () => {
-      console.log('Fetching students with college_id:', user?.college_id);
+      console.log('Fetching students with user:', user);
+      console.log('User college_id:', user?.college_id);
+      console.log('User role:', user?.role);
       
-      const { data, error } = await supabase
+      if (!user) {
+        console.log('No user found, returning empty array');
+        return [];
+      }
+
+      // Build the query based on user role
+      let query = supabase
         .from('students')
         .select(`
           *,
@@ -28,41 +36,76 @@ export function useStudents() {
             id,
             name
           )
-        `)
-        .order('created_at', { ascending: false });
+        `);
 
-      console.log('Students query result:', { data, error });
+      // For platform admin, don't filter by college
+      if (user.role !== 'platform_admin' && user.college_id) {
+        // For faculty and mentors, filter by college
+        query = query.eq('user.college_id', user.college_id);
+      }
+
+      query = query.order('created_at', { ascending: false });
+
+      const { data, error } = await query;
+
+      console.log('Raw students query result:', { data, error });
 
       if (error) {
         console.error('Error fetching students:', error);
         throw error;
       }
       
+      if (!data || data.length === 0) {
+        console.log('No students returned from query');
+        return [];
+      }
+
       // Filter out any students with missing user or department data
-      const validStudents = (data || []).filter(student => 
-        student.user && 
-        student.department && 
-        typeof student.department === 'object' && 
-        'name' in student.department &&
-        student.department.name
-      );
+      const validStudents = data.filter(student => {
+        const isValid = student.user && 
+          student.department && 
+          typeof student.department === 'object' && 
+          'name' in student.department &&
+          student.department.name;
+        
+        if (!isValid) {
+          console.log('Invalid student filtered out:', student);
+        }
+        
+        return isValid;
+      });
       
       console.log('Valid students after filtering:', validStudents);
+      console.log('Total valid students count:', validStudents.length);
+      
       return validStudents;
     },
-    enabled: !!user?.college_id
+    enabled: !!user
   });
 
   const { data: departments = [] } = useQuery({
     queryKey: ['departments', user?.college_id],
     queryFn: async () => {
+      console.log('Fetching departments for college:', user?.college_id);
+      
+      if (!user?.college_id) {
+        console.log('No college_id, returning empty departments');
+        return [];
+      }
+
       const { data, error } = await supabase
         .from('college_departments')
         .select('id, name')
-        .eq('college_id', user?.college_id!)
+        .eq('college_id', user.college_id)
         .order('name');
 
-      if (error) throw error;
+      console.log('Departments query result:', { data, error });
+
+      if (error) {
+        console.error('Error fetching departments:', error);
+        throw error;
+      }
+      
       return data || [];
     },
     enabled: !!user?.college_id
