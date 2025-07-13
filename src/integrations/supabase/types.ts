@@ -1510,7 +1510,31 @@ export type Database = {
       }
     }
     Functions: {
-      [_ in never]: never
+      get_suggested_connections: {
+        Args: { current_user_id: string }
+        Returns: {
+          id: string
+          display_name: string
+          email: string
+          role: Database["public"]["Enums"]["user_role"]
+          department_name: string
+          college_name: string
+          avatar_path: string
+          mutual_connections_count: number
+        }[]
+      }
+      get_user_profile: {
+        Args: { user_id: string }
+        Returns: {
+          id: string
+          display_name: string
+          email: string
+          role: Database["public"]["Enums"]["user_role"]
+          department_name: string
+          college_name: string
+          avatar_path: string
+        }[]
+      }
     }
     Enums: {
       collab_status: "pending" | "approved" | "rejected"
