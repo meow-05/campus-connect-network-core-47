@@ -21,7 +21,7 @@ export function useStudents() {
         return [];
       }
 
-      // Build the query based on user role
+      // Build the base query
       let query = supabase
         .from('students')
         .select(`
@@ -30,18 +30,27 @@ export function useStudents() {
             id,
             display_name,
             email,
-            avatar_path
+            avatar_path,
+            college_id
           ),
-          department:college_departments (
+          department:college_departments!students_department_id_fkey (
             id,
             name
           )
         `);
 
-      // For platform admin, don't filter by college
-      if (user.role !== 'platform_admin' && user.college_id) {
-        // For faculty and mentors, filter by college
+      // Apply filtering based on user role
+      if (user.role === 'platform_admin') {
+        // Platform admin sees all students - no college filter
+        console.log('Platform admin: fetching all students');
+      } else if (user.college_id) {
+        // For faculty and mentors, filter by their college
+        // We need to join with users table and filter by college_id there
+        console.log('Filtering students by college_id:', user.college_id);
         query = query.eq('user.college_id', user.college_id);
+      } else {
+        console.log('No college_id for non-admin user, returning empty array');
+        return [];
       }
 
       query = query.order('created_at', { ascending: false });
@@ -62,14 +71,18 @@ export function useStudents() {
 
       // Filter out any students with missing user or department data
       const validStudents = data.filter(student => {
-        const isValid = student.user && 
-          student.department && 
-          typeof student.department === 'object' && 
-          'name' in student.department &&
-          student.department.name;
+        const hasUser = student.user && student.user.display_name && student.user.email;
+        const hasDepartment = student.department && student.department.name;
+        const isValid = hasUser && hasDepartment;
         
         if (!isValid) {
-          console.log('Invalid student filtered out:', student);
+          console.log('Invalid student filtered out:', {
+            student_id: student.user_id,
+            has_user: !!student.user,
+            user_details: student.user,
+            has_department: !!student.department,
+            department_details: student.department
+          });
         }
         
         return isValid;
