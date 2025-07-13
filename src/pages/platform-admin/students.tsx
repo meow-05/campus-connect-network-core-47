@@ -10,7 +10,7 @@ import { AlertCircle, Download, UserMinus } from 'lucide-react';
 
 export default function PlatformAdminStudents() {
   const { user } = useUser();
-  const { students, departments, isLoading, error, reportStudent, scheduleSession } = useStudents();
+  const { students, departments, isLoading, error, reportStudent } = useStudents();
   
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedDepartment, setSelectedDepartment] = useState('');
@@ -42,10 +42,6 @@ export default function PlatformAdminStudents() {
     reportStudent({ studentId, reason, message });
   };
 
-  const handleScheduleSession = (studentId: string, sessionData: any) => {
-    scheduleSession({ studentId, sessionData });
-  };
-
   const handleExportData = () => {
     // Implementation for exporting student data
     console.log('Exporting student data...');
@@ -63,11 +59,9 @@ export default function PlatformAdminStudents() {
           <h1 className="text-3xl font-bold">Students Management</h1>
         </div>
         
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <div className="space-y-4">
           {Array.from({ length: 6 }).map((_, i) => (
-            <div key={i} className="space-y-4">
-              <Skeleton className="h-48 w-full rounded-lg" />
-            </div>
+            <Skeleton key={i} className="h-32 w-full rounded-lg" />
           ))}
         </div>
       </div>
@@ -128,14 +122,13 @@ export default function PlatformAdminStudents() {
           </p>
         </div>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <div className="space-y-4">
           {filteredStudents.map((student) => (
             <StudentCard
               key={student.user_id}
               student={student}
               userRole="platform_admin"
               onReport={handleReportStudent}
-              onScheduleSession={handleScheduleSession}
             />
           ))}
         </div>

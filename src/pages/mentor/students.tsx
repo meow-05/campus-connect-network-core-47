@@ -9,7 +9,7 @@ import { AlertCircle } from 'lucide-react';
 
 export default function MentorStudents() {
   const { user } = useUser();
-  const { students, departments, isLoading, error, scheduleSession } = useStudents();
+  const { students, departments, isLoading, error } = useStudents();
   
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedDepartment, setSelectedDepartment] = useState('');
@@ -35,10 +35,6 @@ export default function MentorStudents() {
     setSearchTerm('');
     setSelectedDepartment('');
     setSelectedYear('');
-  };
-
-  const handleScheduleSession = (studentId: string, sessionData: any) => {
-    scheduleSession({ studentId, sessionData });
   };
 
   if (isLoading) {
@@ -106,7 +102,6 @@ export default function MentorStudents() {
               key={student.user_id}
               student={student}
               userRole="mentor"
-              onScheduleSession={handleScheduleSession}
             />
           ))}
         </div>

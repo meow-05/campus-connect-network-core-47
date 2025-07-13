@@ -26,7 +26,15 @@ export function StudentsFilters({
   departments,
   onClearFilters
 }: StudentsFiltersProps) {
-  const hasActiveFilters = searchTerm || selectedDepartment || selectedYear;
+  const hasActiveFilters = searchTerm || (selectedDepartment && selectedDepartment !== 'all') || (selectedYear && selectedYear !== 'all');
+
+  const handleDepartmentChange = (value: string) => {
+    onDepartmentChange(value === 'all' ? '' : value);
+  };
+
+  const handleYearChange = (value: string) => {
+    onYearChange(value === 'all' ? '' : value);
+  };
 
   return (
     <div className="flex flex-col sm:flex-row gap-4 mb-6">
@@ -40,12 +48,12 @@ export function StudentsFilters({
         />
       </div>
 
-      <Select value={selectedDepartment} onValueChange={onDepartmentChange}>
+      <Select value={selectedDepartment || 'all'} onValueChange={handleDepartmentChange}>
         <SelectTrigger className="w-full sm:w-48">
           <SelectValue placeholder="All Departments" />
         </SelectTrigger>
         <SelectContent>
-          <SelectItem value="">All Departments</SelectItem>
+          <SelectItem value="all">All Departments</SelectItem>
           {departments.map((dept) => (
             <SelectItem key={dept.id} value={dept.id}>
               {dept.name}
@@ -54,12 +62,12 @@ export function StudentsFilters({
         </SelectContent>
       </Select>
 
-      <Select value={selectedYear} onValueChange={onYearChange}>
+      <Select value={selectedYear || 'all'} onValueChange={handleYearChange}>
         <SelectTrigger className="w-full sm:w-32">
           <SelectValue placeholder="All Years" />
         </SelectTrigger>
         <SelectContent>
-          <SelectItem value="">All Years</SelectItem>
+          <SelectItem value="all">All Years</SelectItem>
           <SelectItem value="1">Year 1</SelectItem>
           <SelectItem value="2">Year 2</SelectItem>
           <SelectItem value="3">Year 3</SelectItem>

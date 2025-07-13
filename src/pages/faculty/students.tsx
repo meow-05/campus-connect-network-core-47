@@ -48,11 +48,9 @@ export default function FacultyStudents() {
           <h1 className="text-3xl font-bold">Students</h1>
         </div>
         
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <div className="space-y-4">
           {Array.from({ length: 6 }).map((_, i) => (
-            <div key={i} className="space-y-4">
-              <Skeleton className="h-48 w-full rounded-lg" />
-            </div>
+            <Skeleton key={i} className="h-32 w-full rounded-lg" />
           ))}
         </div>
       </div>
@@ -100,7 +98,7 @@ export default function FacultyStudents() {
           </p>
         </div>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <div className="space-y-4">
           {filteredStudents.map((student) => (
             <StudentCard
               key={student.user_id}
