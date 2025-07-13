@@ -21,19 +21,19 @@ export function useStudents() {
         return [];
       }
 
-      // Build the base query
+      // Build the base query with proper join syntax
       let query = supabase
         .from('students')
         .select(`
           *,
-          user:users!students_user_id_fkey (
+          user:users!inner (
             id,
             display_name,
             email,
             avatar_path,
             college_id
           ),
-          department:college_departments!fk_student_department (
+          department:college_departments!inner (
             id,
             name
           )
@@ -43,9 +43,11 @@ export function useStudents() {
       if (user.role === 'platform_admin') {
         // Platform admin sees all students - no college filter
         console.log('Platform admin: fetching all students');
+      } else if (user.role === 'mentor') {
+        // Mentors can see all students regardless of department or college
+        console.log('Mentor: fetching all students without department restrictions');
       } else if (user.college_id) {
-        // For faculty and mentors, filter by their college
-        // We need to join with users table and filter by college_id there
+        // For faculty, filter by their college through the user's college_id
         console.log('Filtering students by college_id:', user.college_id);
         query = query.eq('user.college_id', user.college_id);
       } else {
@@ -72,7 +74,7 @@ export function useStudents() {
       // Filter out any students with missing user or department data
       const validStudents = data.filter(student => {
         const hasUser = student.user && student.user.display_name && student.user.email;
-        const hasDepartment = student.department && typeof student.department === 'object' && !('error' in student.department) && student.department.name;
+        const hasDepartment = student.department && student.department.name;
         const isValid = hasUser && hasDepartment;
         
         if (!isValid) {
@@ -81,8 +83,7 @@ export function useStudents() {
             has_user: !!student.user,
             user_details: student.user,
             has_department: !!student.department,
-            department_details: student.department,
-            department_has_error: student.department && 'error' in student.department
+            department_details: student.department
           });
         }
         
