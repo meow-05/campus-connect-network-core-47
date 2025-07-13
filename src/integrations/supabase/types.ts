@@ -1662,6 +1662,13 @@ export type Database = {
       }
     }
     Functions: {
+      get_current_user_role_and_college: {
+        Args: Record<PropertyKey, never>
+        Returns: {
+          role: Database["public"]["Enums"]["user_role"]
+          college_id: string
+        }[]
+      }
       get_suggested_connections: {
         Args: { current_user_id: string }
         Returns: {
