@@ -41,15 +41,14 @@ export function useStudents() {
 
       // Apply filtering based on user role
       if (user.role === 'platform_admin') {
-        // Platform admin sees all students - no college filter
-        console.log('Platform admin: fetching all students');
+        // Platform admin sees all students - no filtering applied
+        console.log('Platform admin: fetching all students without any filters');
       } else if (user.role === 'mentor') {
         // Mentors can see all students regardless of department or college
         console.log('Mentor: fetching all students without department restrictions');
       } else if (user.college_id) {
         // For faculty, filter by their college through the user's college_id
         console.log('Filtering students by college_id:', user.college_id);
-        // Filter by the nested user's college_id
         query = query.eq('users.college_id', user.college_id);
       } else {
         console.log('No college_id for non-admin user, returning empty array');
@@ -77,19 +76,36 @@ export function useStudents() {
         return [];
       }
 
-      // Filter out any students with missing user or department data
+      // Filter students based on role-specific requirements
       const validStudents = data.filter(student => {
         const hasUser = student.users && student.users.display_name && student.users.email;
         const hasDepartment = student.college_departments && student.college_departments.name;
-        const isValid = hasUser && hasDepartment;
         
+        // For platform admin: only require user data, department is optional
+        if (user.role === 'platform_admin') {
+          const isValid = hasUser;
+          if (!isValid) {
+            console.log('Platform admin - student filtered out (missing user data):', {
+              student_id: student.user_id,
+              has_user: !!student.users,
+              user_details: student.users,
+              has_department: !!student.college_departments,
+              department_details: student.college_departments
+            });
+          }
+          return isValid;
+        }
+        
+        // For other roles: require both user and department data
+        const isValid = hasUser && hasDepartment;
         if (!isValid) {
-          console.log('Invalid student filtered out:', {
+          console.log('Student filtered out (missing required data):', {
             student_id: student.user_id,
             has_user: !!student.users,
             user_details: student.users,
             has_department: !!student.college_departments,
-            department_details: student.college_departments
+            department_details: student.college_departments,
+            user_role: user.role
           });
         }
         
