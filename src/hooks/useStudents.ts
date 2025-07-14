@@ -21,7 +21,7 @@ export function useStudents() {
         return [];
       }
 
-      // Let's test a simpler query first to debug the join issue
+      // Query students with proper joins to users and departments
       let query = supabase
         .from('students')
         .select(`
