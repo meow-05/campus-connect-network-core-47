@@ -22,13 +22,13 @@ export default function ProjectsPage() {
   const { user } = useUser();
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedSkills, setSelectedSkills] = useState<string[]>([]);
-  const [statusFilter, setStatusFilter] = useState<'open' | 'in-progress' | 'completed' | ''>('');
+  const [statusFilter, setStatusFilter] = useState<'open' | 'in-progress' | 'completed' | 'all'>('all');
   const [showUploadModal, setShowUploadModal] = useState(false);
 
   const { data: projects, isLoading, error } = useProjects({
     search: searchTerm,
     skills: selectedSkills.length > 0 ? selectedSkills : undefined,
-    status: statusFilter || undefined,
+    status: statusFilter !== 'all' ? statusFilter : undefined,
   });
 
   const handleSkillToggle = (skill: string) => {
@@ -112,7 +112,7 @@ export default function ProjectsPage() {
             <SelectValue placeholder="Filter by status" />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="">All Status</SelectItem>
+            <SelectItem value="all">All Status</SelectItem>
             <SelectItem value="open">Open</SelectItem>
             <SelectItem value="in-progress">In Progress</SelectItem>
             <SelectItem value="completed">Completed</SelectItem>
