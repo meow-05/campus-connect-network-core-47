@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Eye, UserPlus, Calendar, Users, Github, ExternalLink } from "lucide-react";
+import { Eye, UserPlus, Calendar, Users, Github, ExternalLink, Heart, MessageCircle } from "lucide-react";
 import { Card, CardContent, CardFooter, CardHeader } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -8,6 +8,7 @@ import { Dialog, DialogContent, DialogTrigger } from "@/components/ui/dialog";
 import ProjectViewModal from "./ProjectViewModal";
 import JoinProjectModal from "./JoinProjectModal";
 import { useUser } from "@/hooks/useUser";
+import { useProjectReactions, useProjectComments } from "./hooks/useProjects";
 import type { Project } from "./hooks/useProjects";
 
 interface ProjectCardProps {
@@ -19,10 +20,16 @@ export default function ProjectCard({ project }: ProjectCardProps) {
   const [showViewModal, setShowViewModal] = useState(false);
   const [showJoinModal, setShowJoinModal] = useState(false);
 
+  const { data: reactions } = useProjectReactions(project.id);
+  const { data: comments } = useProjectComments(project.id);
+
   const canRequestJoin = user?.role === 'student' && 
     project.team_lead !== user.id && 
     project.status === 'open' &&
     !project.user_request_status;
+
+  const reactionCount = reactions?.length || 0;
+  const commentCount = comments?.length || 0;
 
   const getStatusColor = (status: string) => {
     switch (status) {
@@ -139,6 +146,18 @@ export default function ProjectCard({ project }: ProjectCardProps) {
 
         {/* Request Status */}
         {getRequestStatusDisplay()}
+
+        {/* Engagement Stats */}
+        <div className="flex items-center gap-4 text-sm text-muted-foreground pt-2">
+          <div className="flex items-center gap-1">
+            <Heart className="h-4 w-4" />
+            <span>{reactionCount}</span>
+          </div>
+          <div className="flex items-center gap-1">
+            <MessageCircle className="h-4 w-4" />
+            <span>{commentCount}</span>
+          </div>
+        </div>
       </CardContent>
 
       <CardFooter className="flex gap-2">

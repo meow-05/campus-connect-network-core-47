@@ -8,6 +8,7 @@ interface AuthUser {
   id: string;
   email: string;
   display_name: string | null;
+  avatar_path?: string | null;
   role: 'student' | 'faculty' | 'mentor' | 'platform_admin';
   college_id: string | null;
   is_verified: boolean | null;
@@ -58,6 +59,7 @@ export function useAuth() {
         id: data.id,
         email: data.email,
         display_name: data.display_name,
+        avatar_path: data.avatar_path,
         role: data.role,
         college_id: data.college_id,
         is_verified: data.is_verified,

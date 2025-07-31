@@ -347,3 +347,163 @@ export function useUpdateProjectRequest() {
     },
   });
 }
+
+// Project Reactions Hooks
+export function useProjectReactions(projectId: string) {
+  return useQuery({
+    queryKey: ['project-reactions', projectId],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('project_reactions')
+        .select(`
+          *,
+          users(display_name, avatar_path)
+        `)
+        .eq('project_id', projectId);
+
+      if (error) {
+        console.error('Error fetching project reactions:', error);
+        throw error;
+      }
+
+      return data || [];
+    },
+    enabled: !!projectId,
+  });
+}
+
+export function useToggleReaction() {
+  const queryClient = useQueryClient();
+  const { user } = useUser();
+
+  return useMutation({
+    mutationFn: async ({ projectId, emoji = '❤️' }: { projectId: string; emoji?: string }) => {
+      if (!user?.id) throw new Error('User not authenticated');
+
+      // Check if user already reacted
+      const { data: existingReaction } = await supabase
+        .from('project_reactions')
+        .select('id')
+        .eq('project_id', projectId)
+        .eq('user_id', user.id)
+        .eq('emoji', emoji)
+        .single();
+
+      if (existingReaction) {
+        // Remove reaction
+        const { error } = await supabase
+          .from('project_reactions')
+          .delete()
+          .eq('id', existingReaction.id);
+
+        if (error) throw error;
+        return { action: 'removed' };
+      } else {
+        // Add reaction
+        const { data, error } = await supabase
+          .from('project_reactions')
+          .insert({
+            project_id: projectId,
+            user_id: user.id,
+            emoji
+          })
+          .select()
+          .single();
+
+        if (error) throw error;
+        return { action: 'added', data };
+      }
+    },
+    onSuccess: (_, variables) => {
+      queryClient.invalidateQueries({ queryKey: ['project-reactions', variables.projectId] });
+    },
+    onError: (error) => {
+      console.error('Error toggling reaction:', error);
+      toast.error('Failed to update reaction');
+    },
+  });
+}
+
+// Project Comments Hooks
+export function useProjectComments(projectId: string) {
+  return useQuery({
+    queryKey: ['project-comments', projectId],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('project_comments')
+        .select(`
+          *,
+          users(display_name, avatar_path)
+        `)
+        .eq('project_id', projectId)
+        .order('created_at', { ascending: true });
+
+      if (error) {
+        console.error('Error fetching project comments:', error);
+        throw error;
+      }
+
+      return data || [];
+    },
+    enabled: !!projectId,
+  });
+}
+
+export function useAddComment() {
+  const queryClient = useQueryClient();
+  const { user } = useUser();
+
+  return useMutation({
+    mutationFn: async ({ projectId, content }: { projectId: string; content: string }) => {
+      if (!user?.id) throw new Error('User not authenticated');
+
+      const { data, error } = await supabase
+        .from('project_comments')
+        .insert({
+          project_id: projectId,
+          user_id: user.id,
+          content: content.trim()
+        })
+        .select(`
+          *,
+          users(display_name, avatar_path)
+        `)
+        .single();
+
+      if (error) throw error;
+      return data;
+    },
+    onSuccess: (data) => {
+      queryClient.invalidateQueries({ queryKey: ['project-comments', data.project_id] });
+      toast.success('Comment added successfully!');
+    },
+    onError: (error) => {
+      console.error('Error adding comment:', error);
+      toast.error('Failed to add comment');
+    },
+  });
+}
+
+export function useDeleteComment() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({ commentId, projectId }: { commentId: string; projectId: string }) => {
+      const { error } = await supabase
+        .from('project_comments')
+        .delete()
+        .eq('id', commentId);
+
+      if (error) throw error;
+      return { commentId, projectId };
+    },
+    onSuccess: (data) => {
+      queryClient.invalidateQueries({ queryKey: ['project-comments', data.projectId] });
+      toast.success('Comment deleted successfully!');
+    },
+    onError: (error) => {
+      console.error('Error deleting comment:', error);
+      toast.error('Failed to delete comment');
+    },
+  });
+}
