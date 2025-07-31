@@ -12,6 +12,8 @@ export function useUser() {
     collegeId: authUser?.college_id || null,
     college_id: authUser?.college_id || null, // Add both for compatibility
     displayName: authUser?.display_name || null,
+    display_name: authUser?.display_name || null, // Add both for compatibility
+    avatar_path: authUser?.avatar_path || null,
     user: authUser,
     loading,
     isAuthenticated,

@@ -240,10 +240,7 @@ export function useProjectRequests(projectId?: string) {
         .from('project_requests')
         .select(`
           *,
-          student_info:students!project_requests_student_id_fkey(
-            user_id,
-            users(display_name, avatar_path)
-          )
+          users!project_requests_student_id_fkey(display_name, avatar_path)
         `)
         .eq('project_id', projectId)
         .order('created_at', { ascending: false });
@@ -253,13 +250,13 @@ export function useProjectRequests(projectId?: string) {
         throw error;
       }
 
-      return data.map(request => ({
+      return data?.map(request => ({
         ...request,
         student_info: {
-          display_name: request.student_info?.users?.display_name || 'Unknown Student',
-          avatar_path: request.student_info?.users?.avatar_path
+          display_name: (request.users as any)?.display_name || 'Unknown Student',
+          avatar_path: (request.users as any)?.avatar_path
         }
-      }));
+      })) || [];
     },
     enabled: !!projectId,
   });
@@ -387,7 +384,7 @@ export function useToggleReaction() {
         .eq('project_id', projectId)
         .eq('user_id', user.id)
         .eq('emoji', emoji)
-        .single();
+        .maybeSingle();
 
       if (existingReaction) {
         // Remove reaction
@@ -405,7 +402,7 @@ export function useToggleReaction() {
           .insert({
             project_id: projectId,
             user_id: user.id,
-            emoji
+            emoji: emoji
           })
           .select()
           .single();
@@ -462,7 +459,8 @@ export function useAddComment() {
         .insert({
           project_id: projectId,
           user_id: user.id,
-          content: content.trim()
+          content: content.trim(),
+          edited: false
         })
         .select(`
           *,
