@@ -4,14 +4,15 @@ import { Button } from '@/components/ui/button';
 import { ExternalLink, Github, Linkedin, Globe, FileText } from 'lucide-react';
 import { StudentProfile } from '@/hooks/useStudentProfile';
 import { MentorProfile } from '@/hooks/useMentorProfile';
+import { FacultyProfile } from '@/hooks/useFacultyProfile';
 
 interface SocialLinksProps {
-  profile: StudentProfile | MentorProfile;
-  type?: 'student' | 'mentor';
+  profile: StudentProfile | MentorProfile | FacultyProfile;
+  type?: 'student' | 'mentor' | 'faculty';
 }
 
 export function SocialLinks({ profile, type = 'student' }: SocialLinksProps) {
-  const hasResumeOrPortfolio = 'resume_link' in profile && (profile.resume_link || profile.portfolio_url);
+  const hasResumeOrPortfolio = 'resume_link' in profile && (profile.resume_link || ('portfolio_url' in profile && profile.portfolio_url));
   const hasAnyLinks = profile.github_url || profile.linkedin_url || hasResumeOrPortfolio;
 
   if (!hasAnyLinks) {

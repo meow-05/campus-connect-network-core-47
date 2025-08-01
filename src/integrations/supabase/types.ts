@@ -300,28 +300,37 @@ export type Database = {
       }
       faculty: {
         Row: {
+          bio: string | null
           college_id: string
           created_at: string
           department_id: string
+          github_url: string | null
           is_mentor: boolean
+          linkedin_url: string | null
           privilege: Database["public"]["Enums"]["faculty_privilege"]
           updated_at: string
           user_id: string
         }
         Insert: {
+          bio?: string | null
           college_id: string
           created_at?: string
           department_id: string
+          github_url?: string | null
           is_mentor?: boolean
+          linkedin_url?: string | null
           privilege?: Database["public"]["Enums"]["faculty_privilege"]
           updated_at?: string
           user_id: string
         }
         Update: {
+          bio?: string | null
           college_id?: string
           created_at?: string
           department_id?: string
+          github_url?: string | null
           is_mentor?: boolean
+          linkedin_url?: string | null
           privilege?: Database["public"]["Enums"]["faculty_privilege"]
           updated_at?: string
           user_id?: string
