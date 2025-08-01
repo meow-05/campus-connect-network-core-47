@@ -5,14 +5,16 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Edit, Mail, GraduationCap, Building2 } from 'lucide-react';
 import { StudentProfile } from '@/hooks/useStudentProfile';
+import { MentorProfile } from '@/hooks/useMentorProfile';
 
 interface ProfileCardProps {
-  profile: StudentProfile;
+  profile: StudentProfile | MentorProfile;
   isOwnProfile?: boolean;
   onEdit?: () => void;
+  type?: 'student' | 'mentor';
 }
 
-export function ProfileCard({ profile, isOwnProfile = false, onEdit }: ProfileCardProps) {
+export function ProfileCard({ profile, isOwnProfile = false, onEdit, type = 'student' }: ProfileCardProps) {
   const getInitials = (name: string) => {
     return name.split(' ').map(n => n[0]).join('').toUpperCase();
   };
@@ -36,18 +38,28 @@ export function ProfileCard({ profile, isOwnProfile = false, onEdit }: ProfileCa
                   {profile.user.email}
                 </div>
               </div>
-              <div className="flex items-center space-x-2">
-                <Badge variant="outline" className="flex items-center">
-                  <Building2 className="h-3 w-3 mr-1" />
-                  {profile.department.name}
-                </Badge>
-                <Badge variant="outline" className="flex items-center">
-                  <GraduationCap className="h-3 w-3 mr-1" />
-                  Year {profile.year}
-                </Badge>
-                <Badge variant="secondary">
-                  Sem {profile.semester}
-                </Badge>
+                <div className="flex items-center space-x-2">
+                {type === 'student' && 'department' in profile && (
+                  <>
+                    <Badge variant="outline" className="flex items-center">
+                      <Building2 className="h-3 w-3 mr-1" />
+                      {profile.department.name}
+                    </Badge>
+                    <Badge variant="outline" className="flex items-center">
+                      <GraduationCap className="h-3 w-3 mr-1" />
+                      Year {profile.year}
+                    </Badge>
+                    <Badge variant="secondary">
+                      Sem {profile.semester}
+                    </Badge>
+                  </>
+                )}
+                {type === 'mentor' && 'college' in profile && profile.college && (
+                  <Badge variant="outline" className="flex items-center">
+                    <Building2 className="h-3 w-3 mr-1" />
+                    {profile.college.name}
+                  </Badge>
+                )}
               </div>
             </div>
           </div>
