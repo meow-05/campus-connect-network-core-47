@@ -22,6 +22,7 @@ import EventsPage from "./pages/common/events";
 import NoticesPage from "./pages/common/notices";
 import MentorsPage from "./pages/common/mentors";
 import ConnectionsPage from "./pages/common/connections";
+import ProfileViewerPage from "./pages/common/profile-viewer";
 import SettingsPage from "./pages/common/settings";
 import ReportProblemPage from "./pages/common/report-a-problem";
 import AboutPage from "./pages/common/about-intralink";
@@ -106,6 +107,7 @@ const App = () => (
               <Route path="pages/common/notices" element={<NoticesPage />} />
               <Route path="pages/common/mentors" element={<MentorsPage />} />
               <Route path="pages/common/connections" element={<ConnectionsPage />} />
+              <Route path="pages/common/profile/:userId" element={<ProfileViewerPage />} />
               <Route path="pages/common/settings" element={<SettingsPage />} />
               <Route path="pages/common/report-a-problem" element={<ReportProblemPage />} />
               <Route path="pages/common/about-intralink" element={<AboutPage />} />

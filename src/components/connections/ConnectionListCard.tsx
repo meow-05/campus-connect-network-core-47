@@ -100,12 +100,10 @@ export function ConnectionListCard({
 
     return (
       <div className="flex items-center space-x-2">
-        {onViewProfile && (
-          <Button size="sm" variant="outline" onClick={onViewProfile}>
-            <Eye className="w-4 h-4 mr-2" />
-            View Profile
-          </Button>
-        )}
+        <Button size="sm" variant="outline" onClick={onViewProfile}>
+          <Eye className="w-4 h-4 mr-2" />
+          View Profile
+        </Button>
         <Button size="sm" onClick={onSendRequest} disabled={isProcessing}>
           <UserPlus className="w-4 h-4 mr-2" />
           Connect

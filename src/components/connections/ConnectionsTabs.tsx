@@ -1,5 +1,6 @@
 
 import React from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -11,6 +12,7 @@ import { Users, Clock, Search, Eye } from 'lucide-react';
 import { ConnectionListCard } from './ConnectionListCard';
 
 export function ConnectionsTabs() {
+  const navigate = useNavigate();
   const {
     connections,
     pendingRequests,
@@ -30,10 +32,8 @@ export function ConnectionsTabs() {
     console.log('Message user:', userId);
   };
 
-  const handleViewProfile = (userId: string, role: string) => {
-    // Navigate to user profile based on role
-    const roleRoute = role === 'student' ? 'student' : role === 'faculty' ? 'faculty' : 'mentor';
-    window.location.href = `/pages/${roleRoute}/profile?userId=${userId}&readOnly=true`;
+  const handleViewProfile = (userId: string) => {
+    navigate(`/pages/common/profile/${userId}`);
   };
 
   if (connectionsLoading) {
@@ -92,7 +92,7 @@ export function ConnectionsTabs() {
                 key={suggestion.id}
                 user={suggestion}
                 onSendRequest={() => sendConnectionRequest(suggestion.id)}
-                onViewProfile={() => handleViewProfile(suggestion.id, suggestion.role)}
+                onViewProfile={() => handleViewProfile(suggestion.id)}
                 isProcessing={isProcessing}
                 showMutualConnections
               />
