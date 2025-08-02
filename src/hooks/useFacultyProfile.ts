@@ -56,7 +56,7 @@ async function fetchFacultyProfile(): Promise<FacultyProfile | null> {
       colleges!faculty_college_id_fkey (
         name
       ),
-      college_departments!faculty_department_id_fkey (
+      college_departments!department_id (
         name
       )
     `)
