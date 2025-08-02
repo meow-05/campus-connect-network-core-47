@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -7,6 +7,8 @@ import { Badge } from "@/components/ui/badge";
 import { X, Plus } from "lucide-react";
 import { useCreateProject } from "./hooks/useProjects";
 import { toast } from "sonner";
+import { supabase } from "@/integrations/supabase/client";
+import { useUser } from "@/hooks/useUser";
 
 const SKILLS_OPTIONS = [
   "React", "Node.js", "Python", "JavaScript", "TypeScript", "Java", "C++", 
@@ -21,6 +23,7 @@ interface UploadProjectModalProps {
 }
 
 export default function UploadProjectModal({ onClose }: UploadProjectModalProps) {
+  const { user } = useUser();
   const [formData, setFormData] = useState({
     title: "",
     description: "",
@@ -30,10 +33,34 @@ export default function UploadProjectModal({ onClose }: UploadProjectModalProps)
     status: "open" as const
   });
   
-  const [availableSkills, setAvailableSkills] = useState(SKILLS_OPTIONS);
+  const [availableSkills, setAvailableSkills] = useState<string[]>([]);
   const [newSkill, setNewSkill] = useState("");
+  const [loading, setLoading] = useState(false);
 
   const createProject = useCreateProject();
+
+  // Load skills from database
+  useEffect(() => {
+    loadSkills();
+  }, []);
+
+  const loadSkills = async () => {
+    try {
+      const { data: skills, error } = await supabase
+        .from('skills')
+        .select('name')
+        .order('name');
+      
+      if (error) throw error;
+      
+      const skillNames = skills?.map(skill => skill.name) || [];
+      const allSkills = [...new Set([...SKILLS_OPTIONS, ...skillNames])];
+      setAvailableSkills(allSkills);
+    } catch (error) {
+      console.error('Error loading skills:', error);
+      setAvailableSkills(SKILLS_OPTIONS);
+    }
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -80,12 +107,39 @@ export default function UploadProjectModal({ onClose }: UploadProjectModalProps)
     }));
   };
 
-  const addCustomSkill = () => {
+  const addCustomSkill = async () => {
     const skill = newSkill.trim();
-    if (skill && !availableSkills.includes(skill) && !formData.required_skills.includes(skill)) {
+    if (!skill || availableSkills.includes(skill) || formData.required_skills.includes(skill)) {
+      return;
+    }
+
+    setLoading(true);
+    try {
+      // Try to create the skill in the database
+      const { error } = await supabase
+        .from('skills')
+        .insert({
+          name: skill,
+          category: 'Custom',
+          college_id: user?.college_id || null
+        });
+
+      if (error) {
+        console.error('Error creating skill:', error);
+        toast.error("Failed to add custom skill");
+        return;
+      }
+
+      // Add to local state
       setAvailableSkills(prev => [...prev, skill]);
       addSkill(skill);
       setNewSkill("");
+      toast.success("Custom skill added successfully");
+    } catch (error) {
+      console.error('Error creating skill:', error);
+      toast.error("Failed to add custom skill");
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -199,7 +253,7 @@ export default function UploadProjectModal({ onClose }: UploadProjectModalProps)
                 placeholder="Add custom skill..."
                 onKeyPress={(e) => e.key === 'Enter' && (e.preventDefault(), addCustomSkill())}
               />
-              <Button type="button" onClick={addCustomSkill} disabled={!newSkill.trim()}>
+              <Button type="button" onClick={addCustomSkill} disabled={!newSkill.trim() || loading}>
                 <Plus className="h-4 w-4" />
               </Button>
             </div>
