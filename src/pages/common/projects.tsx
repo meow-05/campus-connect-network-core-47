@@ -5,7 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogTrigger } from "@/components/ui/dialog";
 import ProjectCard from "@/features/projects/ProjectCard";
-import UploadProjectModal from "@/features/projects/UploadProjectModal";
+import { UploadProjectModal } from "@/features/projects/UploadProjectModal";
 import { useProjects } from "@/features/projects/hooks/useProjects";
 import { useUser } from "@/hooks/useUser";
 import EmptyState from "@/components/shared/EmptyState";

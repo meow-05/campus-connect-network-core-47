@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -6,34 +6,53 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Badge } from "@/components/ui/badge";
 import { X, Plus } from "lucide-react";
 import { useCreateProject } from "./hooks/useProjects";
+import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 
-const SKILLS_OPTIONS = [
-  "React", "Node.js", "Python", "JavaScript", "TypeScript", "Java", "C++", 
-  "Machine Learning", "Data Science", "UI/UX Design", "Mobile Development",
-  "Backend Development", "Frontend Development", "Full Stack", "DevOps",
-  "Database", "API Development", "Testing", "Project Management", "AWS",
-  "Docker", "Kubernetes", "GraphQL", "MongoDB", "PostgreSQL", "Firebase"
-];
+interface Skill {
+  id: string;
+  name: string;
+  category: string;
+}
 
 interface UploadProjectModalProps {
   onClose: () => void;
 }
 
-export default function UploadProjectModal({ onClose }: UploadProjectModalProps) {
+export function UploadProjectModal({ onClose }: UploadProjectModalProps) {
   const [formData, setFormData] = useState({
     title: "",
     description: "",
-    required_skills: [] as string[],
+    required_skills: [] as string[], // Store skill IDs (UUIDs)
     max_team_size: "",
     github_url: "",
     status: "open" as const
   });
   
-  const [availableSkills, setAvailableSkills] = useState(SKILLS_OPTIONS);
+  const [availableSkills, setAvailableSkills] = useState<Skill[]>([]);
   const [newSkill, setNewSkill] = useState("");
 
   const createProject = useCreateProject();
+
+  // Fetch available skills from database
+  useEffect(() => {
+    const fetchSkills = async () => {
+      const { data, error } = await supabase
+        .from('skills')
+        .select('id, name, category')
+        .order('category', { ascending: true })
+        .order('name', { ascending: true });
+      
+      if (error) {
+        console.error('Error fetching skills:', error);
+        return;
+      }
+      
+      setAvailableSkills(data || []);
+    };
+    
+    fetchSkills();
+  }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -58,35 +77,62 @@ export default function UploadProjectModal({ onClose }: UploadProjectModalProps)
         status: formData.status,
         is_draft: false
       });
+      toast.success("Project created successfully!");
       onClose();
     } catch (error) {
       console.error("Error creating project:", error);
+      toast.error("Failed to create project. Please try again.");
     }
   };
 
-  const addSkill = (skill: string) => {
-    if (!formData.required_skills.includes(skill)) {
+  const addSkill = (skillId: string) => {
+    if (!formData.required_skills.includes(skillId)) {
       setFormData(prev => ({
         ...prev,
-        required_skills: [...prev.required_skills, skill]
+        required_skills: [...prev.required_skills, skillId]
       }));
     }
   };
 
-  const removeSkill = (skill: string) => {
+  const removeSkill = (skillId: string) => {
     setFormData(prev => ({
       ...prev,
-      required_skills: prev.required_skills.filter(s => s !== skill)
+      required_skills: prev.required_skills.filter(s => s !== skillId)
     }));
   };
 
-  const addCustomSkill = () => {
-    const skill = newSkill.trim();
-    if (skill && !availableSkills.includes(skill) && !formData.required_skills.includes(skill)) {
-      setAvailableSkills(prev => [...prev, skill]);
-      addSkill(skill);
+  const addCustomSkill = async () => {
+    const skillName = newSkill.trim();
+    if (!skillName) return;
+    
+    // Check if skill already exists
+    const existingSkill = availableSkills.find(s => s.name.toLowerCase() === skillName.toLowerCase());
+    if (existingSkill) {
+      addSkill(existingSkill.id);
       setNewSkill("");
+      return;
     }
+    
+    // Create new skill in database
+    const { data, error } = await supabase
+      .from('skills')
+      .insert({
+        name: skillName,
+        category: 'Other'
+      })
+      .select()
+      .single();
+    
+    if (error) {
+      console.error('Error creating skill:', error);
+      toast.error('Failed to create new skill');
+      return;
+    }
+    
+    // Add to available skills and form
+    setAvailableSkills(prev => [...prev, data]);
+    addSkill(data.id);
+    setNewSkill("");
   };
 
   return (
@@ -170,25 +216,20 @@ export default function UploadProjectModal({ onClose }: UploadProjectModalProps)
           <h3 className="text-lg font-semibold">Required Skills *</h3>
           
           {/* Selected Skills */}
-          {formData.required_skills.length > 0 && (
-            <div className="space-y-2">
-              <p className="text-sm text-muted-foreground">Selected skills:</p>
-              <div className="flex flex-wrap gap-2">
-                {formData.required_skills.map((skill) => (
-                  <Badge key={skill} variant="default" className="flex items-center gap-1">
-                    {skill}
-                    <button
-                      type="button"
-                      onClick={() => removeSkill(skill)}
-                      className="ml-1 hover:bg-black/20 rounded-full p-0.5"
-                    >
-                      <X className="h-3 w-3" />
-                    </button>
-                  </Badge>
-                ))}
-              </div>
-            </div>
-          )}
+          <div className="flex flex-wrap gap-2 mb-3">
+            {formData.required_skills.map((skillId) => {
+              const skill = availableSkills.find(s => s.id === skillId);
+              return (
+                <Badge key={skillId} variant="secondary" className="flex items-center gap-1">
+                  {skill?.name || 'Unknown Skill'}
+                  <X 
+                    className="w-3 h-3 cursor-pointer hover:text-destructive" 
+                    onClick={() => removeSkill(skillId)}
+                  />
+                </Badge>
+              );
+            })}
+          </div>
 
           {/* Add Skills */}
           <div className="space-y-3">
@@ -204,19 +245,20 @@ export default function UploadProjectModal({ onClose }: UploadProjectModalProps)
               </Button>
             </div>
             
-            <div className="grid grid-cols-3 gap-2 max-h-32 overflow-y-auto">
+            <div className="grid grid-cols-2 gap-2 max-h-40 overflow-y-auto">
               {availableSkills
-                .filter(skill => !formData.required_skills.includes(skill))
+                .filter(skill => !formData.required_skills.includes(skill.id))
                 .map((skill) => (
                   <Button
-                    key={skill}
+                    key={skill.id}
                     type="button"
                     variant="outline"
                     size="sm"
-                    onClick={() => addSkill(skill)}
-                    className="justify-start text-left text-xs"
+                    onClick={() => addSkill(skill.id)}
+                    className="justify-start text-xs h-8"
                   >
-                    {skill}
+                    <Plus className="w-3 h-3 mr-1" />
+                    {skill.name}
                   </Button>
                 ))}
             </div>
