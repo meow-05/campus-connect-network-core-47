@@ -4,7 +4,6 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { Button } from '@/components/ui/button';
 import { AlertCircle, ArrowLeft } from 'lucide-react';
 import { useStudentProfile } from '@/hooks/useStudentProfile';
-import { useFacultyProfile } from '@/hooks/useFacultyProfile';
 import { useMentorProfile } from '@/hooks/useMentorProfile';
 import { ProfileCard } from '@/components/profile/ProfileCard';
 import { SkillsSection } from '@/components/profile/SkillsSection';
@@ -33,10 +32,15 @@ export default function ProfileViewer() {
           .from('users')
           .select('role')
           .eq('id', userId)
-          .single();
+          .maybeSingle();
 
         if (fetchError) {
           throw fetchError;
+        }
+
+        if (!data) {
+          setError('User not found');
+          return;
         }
 
         setUserRole(data.role);
@@ -50,10 +54,64 @@ export default function ProfileViewer() {
     fetchUserRole();
   }, [userId]);
 
+  // State for faculty profile
+  const [facultyProfile, setFacultyProfile] = useState<any>(null);
+  const [facultyLoading, setFacultyLoading] = useState(false);
+  const [facultyError, setFacultyError] = useState<string | null>(null);
+
   // Use appropriate profile hook based on role
   const studentProfile = useStudentProfile(userRole === 'student' ? userId : undefined);
-  const facultyProfile = useFacultyProfile();
   const mentorProfile = useMentorProfile(userRole === 'mentor' ? userId : undefined);
+
+  // Fetch faculty profile separately
+  useEffect(() => {
+    const fetchFacultyProfile = async () => {
+      if (userRole !== 'faculty' || !userId) return;
+
+      setFacultyLoading(true);
+      setFacultyError(null);
+
+      try {
+        const { data, error } = await supabase
+          .from('faculty')
+          .select(`
+            user_id,
+            college_id,
+            department_id,
+            privilege,
+            bio,
+            github_url,
+            linkedin_url,
+            users!faculty_user_id_fkey (
+              id,
+              display_name,
+              email,
+              avatar_path
+            ),
+            colleges!faculty_college_id_fkey (
+              name
+            ),
+            college_departments!department_id (
+              name
+            )
+          `)
+          .eq('user_id', userId)
+          .maybeSingle();
+
+        if (error) {
+          throw error;
+        }
+
+        setFacultyProfile(data);
+      } catch (err) {
+        setFacultyError('Failed to fetch faculty profile');
+      } finally {
+        setFacultyLoading(false);
+      }
+    };
+
+    fetchFacultyProfile();
+  }, [userRole, userId]);
 
   // Get the appropriate profile data
   const getProfileData = () => {
@@ -67,9 +125,9 @@ export default function ProfileViewer() {
         };
       case 'faculty':
         return {
-          profile: facultyProfile.profile,
-          isLoading: facultyProfile.isLoading,
-          error: facultyProfile.error,
+          profile: facultyProfile,
+          isLoading: facultyLoading,
+          error: facultyError,
           type: 'faculty' as const
         };
       case 'mentor':
