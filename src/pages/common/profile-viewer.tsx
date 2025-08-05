@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { Skeleton } from '@/components/ui/skeleton';
-import { Button } from '@/components/ui/button';
+import { Button } from '@/components/ui/button'
 import { AlertCircle, ArrowLeft } from 'lucide-react';
 import { useStudentProfile } from '@/hooks/useStudentProfile';
 import { useFacultyProfile } from '@/hooks/useFacultyProfile';
