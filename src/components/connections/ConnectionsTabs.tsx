@@ -1,18 +1,18 @@
-
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { ConnectionCard } from './ConnectionCard';
+import { Users, UserPlus, Clock, Search } from 'lucide-react';
+
+import { ConnectionListCard } from './ConnectionListCard';
 import { useConnections } from '@/hooks/useConnections';
 import { Skeleton } from '@/components/ui/skeleton';
 import EmptyState from '@/components/shared/EmptyState';
-import { Users, Clock, Search, Eye } from 'lucide-react';
-import { ConnectionListCard } from './ConnectionListCard';
 
 export function ConnectionsTabs() {
   const navigate = useNavigate();
+
   const {
     connections,
     pendingRequests,
@@ -24,7 +24,7 @@ export function ConnectionsTabs() {
     acceptConnection,
     rejectConnection,
     removeConnection,
-    isProcessing
+    isProcessing,
   } = useConnections();
 
   const handleMessage = (userId: string) => {
@@ -48,11 +48,12 @@ export function ConnectionsTabs() {
 
   return (
     <Tabs defaultValue="discover" className="w-full">
-      <TabsList className="grid w-full grid-cols-3">
+      <TabsList className="grid w-full grid-cols-4">
         <TabsTrigger value="discover" className="flex items-center space-x-2">
           <Search className="w-4 h-4" />
           <span>Discover</span>
         </TabsTrigger>
+
         <TabsTrigger value="connections" className="flex items-center space-x-2">
           <Users className="w-4 h-4" />
           <span>Connections</span>
@@ -62,6 +63,7 @@ export function ConnectionsTabs() {
             </Badge>
           )}
         </TabsTrigger>
+
         <TabsTrigger value="requests" className="flex items-center space-x-2">
           <Clock className="w-4 h-4" />
           <span>Requests</span>
@@ -71,8 +73,19 @@ export function ConnectionsTabs() {
             </Badge>
           )}
         </TabsTrigger>
+
+        <TabsTrigger value="sent" className="flex items-center space-x-2">
+          <UserPlus className="w-4 h-4" />
+          <span>Sent</span>
+          {sentRequests.length > 0 && (
+            <Badge variant="outline" className="ml-1">
+              {sentRequests.length}
+            </Badge>
+          )}
+        </TabsTrigger>
       </TabsList>
 
+      {/* Discover Tab */}
       <TabsContent value="discover" className="space-y-4">
         {suggestionsLoading ? (
           <div className="space-y-4">
@@ -101,6 +114,7 @@ export function ConnectionsTabs() {
         )}
       </TabsContent>
 
+      {/* Connections Tab */}
       <TabsContent value="connections" className="space-y-4">
         {connections.length === 0 ? (
           <EmptyState
@@ -123,6 +137,7 @@ export function ConnectionsTabs() {
         )}
       </TabsContent>
 
+      {/* Requests Tab */}
       <TabsContent value="requests" className="space-y-4">
         {pendingRequests.length === 0 && sentRequests.length === 0 ? (
           <EmptyState
@@ -147,7 +162,7 @@ export function ConnectionsTabs() {
                 </div>
               </div>
             )}
-            
+
             {sentRequests.length > 0 && (
               <div>
                 <h3 className="text-lg font-semibold mb-3">Sent Requests</h3>
@@ -163,6 +178,27 @@ export function ConnectionsTabs() {
                 </div>
               </div>
             )}
+          </div>
+        )}
+      </TabsContent>
+
+      {/* Sent Tab */}
+      <TabsContent value="sent" className="space-y-4">
+        {sentRequests.length === 0 ? (
+          <EmptyState
+            title="No sent requests"
+            description="You haven't sent any connection requests yet."
+          />
+        ) : (
+          <div className="space-y-4">
+            {sentRequests.map((request) => (
+              <ConnectionListCard
+                key={request.id}
+                user={request}
+                onRemove={() => removeConnection(request.connection_id!)}
+                isProcessing={isProcessing}
+              />
+            ))}
           </div>
         )}
       </TabsContent>
