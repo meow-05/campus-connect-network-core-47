@@ -3,24 +3,43 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Button } from '@/components/ui/button';
 import { AlertCircle, ArrowLeft } from 'lucide-react';
-import { useStudentProfile } from '@/hooks/useStudentProfile';
-import { useMentorProfile } from '@/hooks/useMentorProfile';
 import { ProfileCard } from '@/components/profile/ProfileCard';
 import { SkillsSection } from '@/components/profile/SkillsSection';
 import { SocialLinks } from '@/components/profile/SocialLinks';
 import { ExpertiseSection } from '@/components/profile/ExpertiseSection';
 import { supabase } from '@/integrations/supabase/client';
 
+interface UserProfile {
+  user: {
+    id: string;
+    display_name: string;
+    email: string;
+    avatar_path?: string;
+  };
+  role: string;
+  college?: {
+    name: string;
+  };
+  department?: {
+    name: string;
+  };
+  bio?: string;
+  github_url?: string;
+  linkedin_url?: string;
+  skills?: string[];
+  expertise?: string[];
+  verified_skills?: any[];
+}
+
 export default function ProfileViewer() {
   const { userId } = useParams<{ userId: string }>();
   const navigate = useNavigate();
-  const [userRole, setUserRole] = useState<string | null>(null);
+  const [profile, setProfile] = useState<UserProfile | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  // Fetch user role first
   useEffect(() => {
-    const fetchUserRole = async () => {
+    const fetchProfile = async () => {
       if (!userId) {
         setError('User ID not provided');
         setLoading(false);
@@ -28,134 +47,130 @@ export default function ProfileViewer() {
       }
 
       try {
-        console.log('Fetching user role for userId:', userId);
-        const { data, error: fetchError } = await supabase
+        setLoading(true);
+        setError(null);
+
+        // First, get the user's basic info and role
+        const { data: userData, error: userError } = await supabase
           .from('users')
-          .select('role')
+          .select('id, display_name, email, avatar_path, role')
           .eq('id', userId)
-          .maybeSingle();
+          .single();
 
-        console.log('User role fetch result:', { data, error: fetchError });
-
-        if (fetchError) {
-          console.error('Error fetching user role:', fetchError);
-          throw fetchError;
+        if (userError || !userData) {
+          throw new Error('User not found');
         }
 
-        if (!data) {
-          console.error('No user data found for userId:', userId);
-          setError('User not found');
-          return;
+        let profileData: UserProfile = {
+          user: {
+            id: userData.id,
+            display_name: userData.display_name,
+            email: userData.email,
+            avatar_path: userData.avatar_path
+          },
+          role: userData.role
+        };
+
+        // Fetch role-specific data
+        if (userData.role === 'student') {
+          const { data: studentData } = await supabase
+            .from('students')
+            .select(`
+              bio,
+              github_url,
+              linkedin_url,
+              skills,
+              college_departments!department_id (name),
+              colleges!college_id (name)
+            `)
+            .eq('user_id', userId)
+            .single();
+
+          if (studentData) {
+            profileData = {
+              ...profileData,
+              bio: studentData.bio,
+              github_url: studentData.github_url,
+              linkedin_url: studentData.linkedin_url,
+              skills: studentData.skills,
+              college: Array.isArray(studentData.colleges) ? studentData.colleges[0] : studentData.colleges,
+              department: Array.isArray(studentData.college_departments) ? studentData.college_departments[0] : studentData.college_departments
+            };
+          }
+
+          // Get verified skills
+          const { data: verifiedSkills } = await supabase
+            .from('skill_verifications')
+            .select('skill_name, status, verified_at')
+            .eq('student_id', userId)
+            .eq('status', 'verified');
+
+          if (verifiedSkills) {
+            profileData.verified_skills = verifiedSkills;
+          }
+
+        } else if (userData.role === 'faculty') {
+          const { data: facultyData } = await supabase
+            .from('faculty')
+            .select(`
+              bio,
+              github_url,
+              linkedin_url,
+              college_departments!department_id (name),
+              colleges!college_id (name)
+            `)
+            .eq('user_id', userId)
+            .single();
+
+          if (facultyData) {
+            profileData = {
+              ...profileData,
+              bio: facultyData.bio,
+              github_url: facultyData.github_url,
+              linkedin_url: facultyData.linkedin_url,
+              college: Array.isArray(facultyData.colleges) ? facultyData.colleges[0] : facultyData.colleges,
+              department: Array.isArray(facultyData.college_departments) ? facultyData.college_departments[0] : facultyData.college_departments
+            };
+          }
+
+        } else if (userData.role === 'mentor') {
+          const { data: mentorData } = await supabase
+            .from('mentors')
+            .select(`
+              bio,
+              expertise,
+              github_url,
+              linkedin_url,
+              colleges!college_id (name)
+            `)
+            .eq('user_id', userId)
+            .single();
+
+          if (mentorData) {
+            profileData = {
+              ...profileData,
+              bio: mentorData.bio,
+              expertise: mentorData.expertise,
+              github_url: mentorData.github_url,
+              linkedin_url: mentorData.linkedin_url,
+              college: Array.isArray(mentorData.colleges) ? mentorData.colleges[0] : mentorData.colleges
+            };
+          }
         }
 
-        console.log('User role found:', data.role);
-        setUserRole(data.role);
+        setProfile(profileData);
       } catch (err) {
-        setError('Failed to fetch user information');
+        console.error('Error fetching profile:', err);
+        setError(err instanceof Error ? err.message : 'Failed to fetch profile');
       } finally {
         setLoading(false);
       }
     };
 
-    fetchUserRole();
+    fetchProfile();
   }, [userId]);
 
-  // State for faculty profile
-  const [facultyProfile, setFacultyProfile] = useState<any>(null);
-  const [facultyLoading, setFacultyLoading] = useState(false);
-  const [facultyError, setFacultyError] = useState<string | null>(null);
-
-  // Use appropriate profile hook based on role
-  const studentProfile = useStudentProfile(userRole === 'student' ? userId : undefined);
-  const mentorProfile = useMentorProfile(userRole === 'mentor' ? userId : undefined);
-
-  // Fetch faculty profile separately
-  useEffect(() => {
-    const fetchFacultyProfile = async () => {
-      if (userRole !== 'faculty' || !userId) return;
-
-      setFacultyLoading(true);
-      setFacultyError(null);
-
-      try {
-        const { data, error } = await supabase
-          .from('faculty')
-          .select(`
-            user_id,
-            college_id,
-            department_id,
-            privilege,
-            bio,
-            github_url,
-            linkedin_url,
-            users!faculty_user_id_fkey (
-              id,
-              display_name,
-              email,
-              avatar_path
-            ),
-            colleges!faculty_college_id_fkey (
-              name
-            ),
-            college_departments!department_id (
-              name
-            )
-          `)
-          .eq('user_id', userId)
-          .maybeSingle();
-
-        if (error) {
-          throw error;
-        }
-
-        setFacultyProfile(data);
-      } catch (err) {
-        setFacultyError('Failed to fetch faculty profile');
-      } finally {
-        setFacultyLoading(false);
-      }
-    };
-
-    fetchFacultyProfile();
-  }, [userRole, userId]);
-
-  // Get the appropriate profile data
-  const getProfileData = () => {
-    switch (userRole) {
-      case 'student':
-        return {
-          profile: studentProfile.profile,
-          isLoading: studentProfile.isLoading,
-          error: studentProfile.error,
-          type: 'student' as const
-        };
-      case 'faculty':
-        return {
-          profile: facultyProfile,
-          isLoading: facultyLoading,
-          error: facultyError,
-          type: 'faculty' as const
-        };
-      case 'mentor':
-        return {
-          profile: mentorProfile.profile,
-          isLoading: mentorProfile.loading,
-          error: mentorProfile.error,
-          type: 'mentor' as const
-        };
-      default:
-        return {
-          profile: null,
-          isLoading: false,
-          error: 'Unknown user role',
-          type: 'student' as const
-        };
-    }
-  };
-
-  const { profile, isLoading: profileLoading, error: profileError, type } = getProfileData();
-
-  if (loading || profileLoading) {
+  if (loading) {
     return (
       <div className="space-y-6">
         <div className="flex items-center gap-4">
@@ -176,14 +191,14 @@ export default function ProfileViewer() {
     );
   }
 
-  if (error || profileError) {
+  if (error) {
     return (
       <div className="flex items-center justify-center min-h-96">
         <div className="text-center">
           <AlertCircle className="h-12 w-12 text-destructive mx-auto mb-4" />
           <h2 className="text-lg font-semibold mb-2">Error Loading Profile</h2>
           <p className="text-muted-foreground">
-            {(error || profileError)?.toString() || 'There was a problem loading the profile.'}
+            {error}
           </p>
           <Button 
             variant="outline" 
@@ -232,7 +247,7 @@ export default function ProfileViewer() {
           Back
         </Button>
         <h1 className="text-3xl font-bold">
-          {profile?.users?.display_name || profile?.user?.display_name || profile?.users?.email || profile?.user?.email || 'User'}'s Profile
+          {profile.user.display_name || profile.user.email}'s Profile
         </h1>
       </div>
 
@@ -240,25 +255,25 @@ export default function ProfileViewer() {
         {/* Main Profile Section */}
         <div className="lg:col-span-2 space-y-6">
           <ProfileCard 
-            profile={profile} 
+            profile={profile as any} 
             isOwnProfile={false}
-            type={type}
+            type={profile.role as 'student' | 'faculty' | 'mentor'}
           />
           
           {/* Skills section for students */}
-          {type === 'student' && (
-            <SkillsSection profile={profile} />
+          {profile.role === 'student' && profile.skills && (
+            <SkillsSection profile={profile as any} />
           )}
           
           {/* Expertise section for mentors */}
-          {type === 'mentor' && profile.expertise && (
+          {profile.role === 'mentor' && profile.expertise && (
             <ExpertiseSection expertise={profile.expertise} />
           )}
         </div>
 
         {/* Sidebar */}
         <div className="space-y-6">
-          <SocialLinks profile={profile} type={type} />
+          <SocialLinks profile={profile as any} type={profile.role as 'student' | 'faculty' | 'mentor'} />
         </div>
       </div>
     </div>
