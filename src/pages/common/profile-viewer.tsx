@@ -28,21 +28,27 @@ export default function ProfileViewer() {
       }
 
       try {
+        console.log('Fetching user role for userId:', userId);
         const { data, error: fetchError } = await supabase
           .from('users')
           .select('role')
           .eq('id', userId)
           .maybeSingle();
 
+        console.log('User role fetch result:', { data, error: fetchError });
+
         if (fetchError) {
+          console.error('Error fetching user role:', fetchError);
           throw fetchError;
         }
 
         if (!data) {
+          console.error('No user data found for userId:', userId);
           setError('User not found');
           return;
         }
 
+        console.log('User role found:', data.role);
         setUserRole(data.role);
       } catch (err) {
         setError('Failed to fetch user information');
@@ -226,7 +232,7 @@ export default function ProfileViewer() {
           Back
         </Button>
         <h1 className="text-3xl font-bold">
-          {profile.user.display_name || profile.user.email}'s Profile
+          {profile?.users?.display_name || profile?.user?.display_name || profile?.users?.email || profile?.user?.email || 'User'}'s Profile
         </h1>
       </div>
 
